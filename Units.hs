@@ -109,6 +109,9 @@ type Candela  = EL '[ [ts|cd|] :^ I1 ]
 plus :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
 plus (U a) (U b) = U (a+b)
 
+minus :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
+minus (U a) (U b) = U (a-b)
+
 mult :: Num a => a:@u -> a:@v -> a:@(u*v)
 mult (U a) (U b) = U (a*b)
 
