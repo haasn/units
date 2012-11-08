@@ -18,8 +18,8 @@ promote [d|
   mulNat  N0    _ = N0
   mulNat (NS n) m = addNat m (mulNat n m)
 
-  n0, n1, n2, n3, n4 :: Nat
-  n0 = N0; n1 = NS n0; n2 = NS n1; n3 = NS n2; n4 = NS n3
+  n1, n2, n3, n4 :: Nat
+  n1 = NS N0; n2 = NS n1; n3 = NS n2; n4 = NS n3
 
   -- Integers as ‘normal’ or ‘negative’, where negative is offset by -1
 
@@ -54,17 +54,17 @@ promote [d|
   negInt (Neg   a    ) = Norm (NS a)
 
   i0, i1, i2, i3, i4 :: Int
-  i0 = Norm n0; i1 = Norm n1; i2 = Norm n2; i3 = Norm n3; i4 = Norm n4
+  i0 = Norm N0; i1 = Norm n1; i2 = Norm n2; i3 = Norm n3; i4 = Norm n4
 
   -- Pretty association lists for units
 
-  data Exp = [TChar] :^ Int deriving Eq
-  data Unit = EL [Exp]
+  data Assoc = [TChar] :^ Int deriving Eq
+  data Unit = EL [Assoc]
 
-  key :: Exp -> [TChar]
+  key :: Assoc -> [TChar]
   key (s:^_) = s
 
-  val :: Exp -> Int
+  val :: Assoc -> Int
   val (_:^e) = e
 
   -- Type-level ‘characters’
@@ -75,3 +75,10 @@ promote [d|
              | Cn | Co | Cp | Cq | Cr | Cs | Ct | Cu | Cv | Cw | Cx | Cy | Cz
     deriving (Show, Eq, Ord)
   |]
+
+-- Type for tagging values with units
+
+data a :@ (u :: Unit) = U a deriving Show
+infix 5 :@
+
+type One = EL '[]

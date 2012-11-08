@@ -92,8 +92,11 @@ toNat :: Integer -> Type
 toNat 0 = PromotedT 'N0
 toNat n = AppT (PromotedT 'NS) (toNat (n-1))
 
-quoteUnitT :: String -> Type
-quoteUnitT = AppT (PromotedT 'EL) . toUnit . flatten . parseUnit
+quoteUnitT :: String -> Q Type
+quoteUnitT = return . AppT (PromotedT 'EL) . toUnit . flatten . parseUnit
+
+quoteUnitE :: String -> Q Exp
+quoteUnitE s = [e|U 1 :: Num a => a :@ $(quoteUnitT s)|]
 
 u :: QuasiQuoter
-u = QuasiQuoter undefined undefined (return . quoteUnitT) undefined
+u = QuasiQuoter quoteUnitE undefined quoteUnitT undefined
