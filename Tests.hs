@@ -21,13 +21,13 @@ test2 = n 5*second
 test3 :: ([u|foo*bar|] :==: [u|bar*foo|]) ~ True => ()
 test3 = ()
 
-test4 :: Double :@ (Meter*Second)
+test4 :: Double :@ Meter*Second
 test4 = test1 * test2
 
 test5 :: (((Meter*Meter) :==: [u|m²|]) ~ True) => ()
 test5 = ()
 
-test6 :: Double :@ (Meter/Second)
+test6 :: Double :@ Meter/Second
 test6 = test4 / (test2 * test2)
 
 test7 :: Double :@ Kilogram
@@ -37,3 +37,8 @@ type Newton = [u| kg*m/s² |]
 
 test8 :: Double :@ Newton
 test8 = test7 * test6 / test2
+
+-- Example of how to convert units
+
+yards :: Fractional a => a :@ [u|yd|] -> a :@ Meter
+yards = (*) (n 0.9144 * [u|m/yd|])
