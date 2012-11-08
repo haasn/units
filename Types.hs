@@ -73,6 +73,5 @@ promote [d|
              | CN | CO | CP | CQ | CR | CS | CT | CU | CV | CW | CX | CY | CZ
              | Ca | Cb | Cc | Cd | Ce | Cf | Cg | Ch | Ci | Cj | Ck | Cl | Cm
              | Cn | Co | Cp | Cq | Cr | Cs | Ct | Cu | Cv | Cw | Cx | Cy | Cz
-
     deriving (Show, Eq, Ord)
   |]

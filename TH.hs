@@ -18,7 +18,7 @@ import Text.Parsec.Language (haskell)
 import Text.Parsec.String
 import Text.Parsec.Token (parens, natural)
 
--- Quasiquoters for TChar
+-- Quasiquoter for TString
 
 toTChar :: Char -> Name
 toTChar = \case
@@ -61,13 +61,18 @@ unit = buildExpressionParser ops prim
 
 prim = name <|> parens haskell unit
 name = Unit <$> many1 letter <* spaces <*> option 1 exp
-  where exp = char '^' *> spaces *> natural haskell <* spaces
-          <|> 2 <$ char '²' <* spaces
+ where
+  exp  = char '^' *> spaces *> natural haskell <* spaces
+     <|> choice (zipWith (\n o -> n <$ char o) [0..] nums) <* spaces
+
+  nums = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
 
 flatten :: UnitExp -> M.Map String Integer
 flatten (Unit s i) = M.singleton s i
 flatten (Mult a b) = M.unionWith (+) (flatten a) (flatten b)
 flatten (Recip  m) = M.map negate (flatten m)
+
+-- Type generation for units
 
 toUnit :: M.Map String Integer -> Type
 toUnit = promotedListT . map toAssoc . filter ((/=0) . snd) . M.toList
