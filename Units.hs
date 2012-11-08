@@ -1,25 +1,14 @@
 {-# LANGUAGE KindSignatures, DataKinds, TemplateHaskell, TypeFamilies
-  , UndecidableInstances, TypeOperators, PolyKinds #-}
+  , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
 module Units where
 
-import Prelude hiding (Int)
+import Prelude hiding (Int, div)
 
 import Data.Singletons
 import Units.Types
 import Units.TH
 
--- Pretty association lists for units
-
 promote [d|
-  data Exp = [TChar] :^ Int deriving Eq
-  data Unit = EL [Exp]
-
-  key :: Exp -> [TChar]
-  key (s:^e) = s
-
-  val :: Exp -> Int
-  val (s:^e) = e
-
   -- Equality checking
 
   eqExpList :: [Exp] -> [Exp] -> Bool
@@ -97,44 +86,50 @@ data a :@ (u :: Unit) = U a deriving Show
 
 -- Units themselves
 
-type Meter    = EL '[ [ts|m|]  :^ I1 ]
-type Kilogram = EL '[ [ts|kg|] :^ I1 ]
-type Second   = EL '[ [ts|s|]  :^ I1 ]
-type Ampere   = EL '[ [ts|A|]  :^ I1 ]
-type Kelvin   = EL '[ [ts|K|]  :^ I1 ]
-type Candela  = EL '[ [ts|cd|] :^ I1 ]
+type Meter    = [u|m |]
+type Kilogram = [u|kg|]
+type Second   = [u|s |]
+type Ampere   = [u|A |]
+type Kelvin   = [u|K |]
+type Candela  = [u|cd|]
+type Newton   = [u|kg*m/s²|]
 
 -- Type-safe unit calculations
 
-plus :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
-plus (U a) (U b) = U (a+b)
+add :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
+add (U a) (U b) = U (a+b)
 
-minus :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
-minus (U a) (U b) = U (a-b)
+sub :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
+sub (U a) (U b) = U (a-b)
 
-mult :: Num a => a:@u -> a:@v -> a:@(u*v)
-mult (U a) (U b) = U (a*b)
+mul :: Num a => a:@u -> a:@v -> a:@(u*v)
+mul (U a) (U b) = U (a*b)
 
-divide :: Fractional a => a:@u -> a:@v -> a:@(u/v)
-divide (U a) (U b) = U (a/b)
+div :: Fractional a => a:@u -> a:@v -> a:@(u/v)
+div (U a) (U b) = U (a/b)
 
 -- Tests
 
 test1 :: Double :@ Meter
-test1 = (U 1 :: Double :@ Meter) `plus` (U 2 :: Double :@ Meter)
+test1 = (U 1 :: Double :@ Meter) `add` (U 2 :: Double :@ Meter)
 
 test2 :: Double :@ Second
 test2 = U 5
 
-test3 :: ((EL '[ [ts|foo|] :^ I1, [ts|bar|] :^ I1 ] :==:
-           EL '[ [ts|bar|] :^ I1, [ts|foo|] :^ I1 ]) ~ True) => ()
+test3 :: ([u|foo*bar|] :==: [u|bar*foo|]) ~ True => ()
 test3 = ()
 
 test4 :: Double :@ (Meter*Second)
-test4 = test1 `mult` test2
+test4 = test1 `mul` test2
 
-test5 :: ((Meter*Meter :==: EL '[ [ts|m|] :^ I2 ]) ~ True) => ()
+test5 :: ((Meter*Meter :==: [u|m²|]) ~ True) => ()
 test5 = ()
 
 test6 :: Double :@ (Meter/Second)
-test6 = test4 `divide` (test2 `mult` test2)
+test6 = test4 `div` (test2 `mul` test2)
+
+test7 :: Double :@ Kilogram
+test7 = U 13.24
+
+test8 :: Double :@ Newton
+test8 = (test7 `mul` test6) `div` test2

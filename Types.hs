@@ -38,6 +38,9 @@ promote [d|
   -- (1+a) + (-1-(1+b)) = 1+a + (-2-b) = a + -1-b
   addInt (Norm (NS a)) (Neg (NS b)) = addInt (Norm a) (Neg b)
 
+  -- (-1-a) + b = b + (-1-a)
+  addInt (Neg a) (Norm b) = addInt (Norm b) (Neg a)
+
   subInt :: Int -> Int -> Int
   subInt a b = addInt a (negInt b)
 
@@ -52,6 +55,17 @@ promote [d|
 
   i0, i1, i2, i3, i4 :: Int
   i0 = Norm n0; i1 = Norm n1; i2 = Norm n2; i3 = Norm n3; i4 = Norm n4
+
+  -- Pretty association lists for units
+
+  data Exp = [TChar] :^ Int deriving Eq
+  data Unit = EL [Exp]
+
+  key :: Exp -> [TChar]
+  key (s:^_) = s
+
+  val :: Exp -> Int
+  val (_:^e) = e
 
   -- Type-level ‘characters’
 
