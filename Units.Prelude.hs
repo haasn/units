@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances, TypeFamilies, TypeOperators, DataKinds #-}
 module Units.Prelude ((+), (-), (*), (/), n) where
 import Prelude hiding ((+), (-), (*), (/))
 
@@ -22,4 +22,4 @@ infixl 7 *
 infixl 7 /
 
 n :: a -> a :@ One
-n = literal
+n = lit

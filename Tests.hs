@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds, TypeFamilies, TemplateHaskell, QuasiQuotes
+  , TypeOperators #-}
 module Tests where
 import Prelude hiding ((+), (-), (*), (/))
 

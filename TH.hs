@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, LambdaCase #-}
+{-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
 module Units.TH (ts, u) where
 
 import Prelude hiding (div, exp)
