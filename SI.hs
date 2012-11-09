@@ -13,20 +13,9 @@ type Ampere   = [u|A |]
 type Kelvin   = [u|K |]
 type Candela  = [u|cd|]
 
-meter :: Num a => a :@ Meter
-meter = [u|m|]
+makeUnits [''Meter, ''Kilogram, ''Second, ''Ampere, ''Kelvin, ''Candela]
 
-kilogram :: Num a => a :@ Kilogram
-kilogram = [u|kg|]
+-- Some derived units
 
-second :: Num a => a :@ Second
-second = [u|s|]
-
-ampere :: Num a => a :@ Ampere
-ampere = [u|A|]
-
-kelvin :: Num a => a :@ Kelvin
-kelvin = [u|K|]
-
-candela :: Num a => a :@ Candela
-candela = [u|cd|]
+type Newton = Kilogram*Meter/(Second*Second)
+makeUnit ''Newton

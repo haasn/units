@@ -1,10 +1,11 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
-module Units.TH (ts, u) where
+module Units.TH (ts, u, makeUnit, makeUnits) where
 
 import Prelude hiding (div, exp)
 
 import Control.Applicative hiding ((<|>))
 
+import Data.Char (toLower)
 import qualified Data.Map as M
 
 import Language.Haskell.TH
@@ -96,7 +97,22 @@ quoteUnitT :: String -> Q Type
 quoteUnitT = return . AppT (PromotedT 'EL) . toUnit . flatten . parseUnit
 
 quoteUnitE :: String -> Q Exp
-quoteUnitE s = [e|U 1 :: Num a => a :@ $(quoteUnitT s)|]
+quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
 
 u :: QuasiQuoter
 u = QuasiQuoter quoteUnitE undefined quoteUnitT undefined
+
+-- Demote a unit to the value level
+
+makeUnit :: Name -> Q [Dec]
+makeUnit n = do
+  t <- [t|Num a => a :@ $(return (ConT n))|]
+  b <- [e|U 1|]
+  return [ SigD v t, ValD (VarP v) (NormalB b) [] ]
+ where
+  v = mkName $ uncap (nameBase n)
+  uncap  ""    = ""
+  uncap (h:xs) = toLower h : xs
+
+makeUnits :: [Name] -> Q [Dec]
+makeUnits = fmap concat . mapM makeUnit
