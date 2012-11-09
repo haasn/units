@@ -5,6 +5,8 @@ module Units.Types where
 import Prelude hiding (Int)
 import Data.Singletons
 
+import qualified GHC.TypeLits as GHC (Nat)
+
 promote [d|
   -- Peano ℕ⁺
 
@@ -18,8 +20,9 @@ promote [d|
   mulNat  N0    _ = N0
   mulNat (NS n) m = addNat m (mulNat n m)
 
-  n1, n2, n3, n4 :: Nat
-  n1 = NS N0; n2 = NS n1; n3 = NS n2; n4 = NS n3
+  n1, n2, n3, n4, n5, n6, n7, n8, n9 :: Nat
+  n1 = NS N0; n2 = NS n1; n3 = NS n2; n4 = NS n3; n5 = NS n4; n6 = NS n5;
+  n7 = NS n6; n8 = NS n7; n9 = NS n8
 
   -- Integers as ‘normal’ or ‘negative’, where negative is offset by -1
 
@@ -44,17 +47,25 @@ promote [d|
   subInt :: Int -> Int -> Int
   subInt a b = addInt a (negInt b)
 
-  mulIntNat :: Int -> Nat -> Int
-  mulIntNat (Norm a) b = Norm (mulNat a b)
-  mulIntNat (Neg  a) b = subInt (Norm (mulNat a b)) (Norm b)
+  mulInt :: Int -> Int -> Int
+  mulInt (Norm a) (Norm b) = Norm (mulNat a b)
+  mulInt (Neg  a) (Norm b) = subInt (Norm (mulNat a b)) (Norm b)
+  mulInt (Norm a) (Neg  b) = mulInt (Neg b) (Norm a)
+
+  -- (-1-a) * (-1-b) = -(-1-a) - b(-1-a) = 1+a+b+ab
+  mulInt (Neg  a) (Neg  b) = Norm (NS (addNat a (addNat b (mulNat a b))))
 
   negInt :: Int -> Int
   negInt (Norm  N0   ) = Norm N0
   negInt (Norm (NS a)) = Neg a
   negInt (Neg   a    ) = Norm (NS a)
 
-  i0, i1, i2, i3, i4 :: Int
+  i0, i1, i2, i3, i4, i5, i6, i7, i8, i9 :: Int
   i0 = Norm N0; i1 = Norm n1; i2 = Norm n2; i3 = Norm n3; i4 = Norm n4
+  i5 = Norm n5; i6 = Norm n6; i7 = Norm n7; i8 = Norm n8; i9 = Norm n9
+
+  im1, im2, im3, im4, im5 :: Int
+  im1 = Neg N0; im2 = Neg n1; im3 = Neg n2; im4 = Neg n3; im5 = Neg n4
 
   -- Pretty association lists for units
 
@@ -82,3 +93,17 @@ data a :@ (u :: Unit) = U a deriving Show
 infix 5 :@
 
 type One = EL '[]
+
+-- Injection of built-int Nat -> Int
+
+type family IntLit (a :: GHC.Nat) :: Int
+type instance IntLit 0 = I0
+type instance IntLit 1 = I1
+type instance IntLit 2 = I2
+type instance IntLit 3 = I3
+type instance IntLit 4 = I4
+type instance IntLit 5 = I5
+type instance IntLit 6 = I6
+type instance IntLit 7 = I7
+type instance IntLit 8 = I8
+type instance IntLit 9 = I9

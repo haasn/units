@@ -2,7 +2,7 @@
   , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
 module Units
   ( (:@)()
-  , (*)(), (/)()
+  , (*)(), (/)(), (^)()
   , One
   , addU, subU, mulU, divU
   , lit, coerceUnit
@@ -11,6 +11,8 @@ module Units
 import Prelude hiding (Int, div)
 import Data.Singletons
 import Units.Types
+
+import qualified GHC.TypeLits as GHC (Nat)
 
 promote [d|
   -- Equality checking
@@ -58,14 +60,17 @@ promote [d|
   multUnit :: Unit -> Unit -> Unit
   multUnit (EL a) (EL b) = EL (cleanup (mergeAdd a b))
 
-  -- Negation
+  -- Multiplication with constant factor
 
-  negAList :: [Assoc] -> [Assoc]
-  negAList  []        = []
-  negAList ((s:^e):x) = (s :^ negInt e) : negAList x
+  mapMul :: Int -> [Assoc] -> [Assoc]
+  mapMul _  []        = []
+  mapMul i ((s:^e):x) = (s :^ mulInt i e) : mapMul i x
 
   recip :: Unit -> Unit
-  recip (EL a) = EL (negAList a)
+  recip (EL a) = EL (mapMul im1 a)
+
+  powUnit :: Unit -> Int -> Unit
+  powUnit (EL a) i = EL (mapMul i a)
 
   -- Cleanup of 0s
 
@@ -85,6 +90,11 @@ infixl 7 *
 type family (a :: Unit) / (b :: Unit) :: Unit
 type instance a/b = MultUnit a (Recip b)
 infixl 7 /
+
+type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
+type instance a^b = PowUnit a (IntLit b)
+infixr 8 ^
+
 
 -- Type-safe unit calculations
 

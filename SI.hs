@@ -18,8 +18,8 @@ makeUnits [ ''Meter, ''Kilogram, ''Second, ''Ampere, ''Kelvin, ''Candela ]
 -- Some derived units
 
 type Hertz   = One / Second
-type Newton  = Kilogram * Meter / (Second*Second)
-type Pascal  = Newton / (Meter*Meter)
+type Newton  = Kilogram * Meter / Second^2
+type Pascal  = Newton / Meter^2
 type Joule   = Newton * Meter
 type Watt    = Joule / Second
 type Coulomb = Ampere * Second
@@ -28,7 +28,7 @@ type Farad   = Coulomb / Volt
 type Ohm     = Volt / Ampere
 type Siemens = One / Ohm
 type Weber   = Joule / Ampere
-type Tesla   = Weber / (Meter*Meter)
+type Tesla   = Weber / Meter^2
 type Henry   = Weber / Ampere
 type Gray    = Joule / Kilogram
 
