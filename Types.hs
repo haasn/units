@@ -99,14 +99,16 @@ promote [d|
 
   -- Rational numbers, as pairs of ints a/b
 
-  data Rational = Int :/ Int deriving Eq -- Warning: Not quite correct Eq
-                                         -- instance, normalize everything
+  data Rational = Int :/ Int deriving Eq
 
   mkRatio :: Int -> Int -> Rational
   mkRatio x y = reduce (mulInt x (signumInt y)) (absInt y)
 
   reduce :: Int -> Int -> Rational
-  reduce x y = (x `quotInt` gcdInt x y) :/ (y `quotInt` gcdInt x y)
+  reduce x y = reduce' x y (gcdInt x y)
+
+  reduce' :: Int -> Int -> Int -> Rational
+  reduce' x y g = (x `quotInt` g) :/ (y `quotInt` g)
 
   gcdInt :: Int -> Int -> Int
   gcdInt x y = gcdInt' (absInt x) (absInt y)
