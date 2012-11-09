@@ -1,12 +1,13 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
 module Units.TH (ts, u, makeUnit, makeUnits) where
 
-import Prelude hiding (div, exp)
+import Prelude hiding (div, exp, Rational)
 
 import Control.Applicative hiding ((<|>))
 
 import Data.Char (toLower)
-import qualified Data.Map as M
+import qualified Data.Ratio as R
+import qualified Data.Map   as M
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
@@ -17,7 +18,7 @@ import Text.Parsec
 import Text.Parsec.Expr
 import Text.Parsec.Language (haskell)
 import Text.Parsec.String
-import Text.Parsec.Token (parens, natural)
+import Text.Parsec.Token (parens, naturalOrFloat)
 
 -- Quasiquoter for TString
 
@@ -47,8 +48,7 @@ ts = QuasiQuoter
 
 -- Parser and quasiquoters for Unit
 
-data UnitExp = Unit String Integer | Mult UnitExp UnitExp | Recip UnitExp
-  deriving Show
+data UnitExp = Unit String R.Rational | Mult UnitExp UnitExp | Recip UnitExp
 
 parseUnit :: String -> UnitExp
 parseUnit = either (error . show) id . parse (spaces *> unit) "Unit QuasiQuoter"
@@ -63,26 +63,33 @@ unit = buildExpressionParser ops prim
 prim = name <|> parens haskell unit
 name = Unit <$> many1 letter <* spaces <*> option 1 exp
  where
-  exp  = char '^' *> spaces *> natural haskell <* spaces
+  exp  = char '^' *> spaces *> rational <* spaces
      <|> choice (zipWith (\n o -> n <$ char o) [0..] nums) <* spaces
 
   nums = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
 
-flatten :: UnitExp -> M.Map String Integer
-flatten (Unit s i) = M.singleton s i
+rational :: Parser R.Rational
+rational = either fromInteger toRational <$> naturalOrFloat haskell
+
+flatten :: UnitExp -> M.Map String R.Rational
+flatten (Unit s r) = M.singleton s r
 flatten (Mult a b) = M.unionWith (+) (flatten a) (flatten b)
 flatten (Recip  m) = M.map negate (flatten m)
 
 -- Type generation for units
 
-toUnit :: M.Map String Integer -> Type
+toUnit :: M.Map String R.Rational -> Type
 toUnit = promotedListT . map toAssoc . filter ((/=0) . snd) . M.toList
 
-toAssoc :: (String, Integer) -> Type
-toAssoc (s, i) = AppT (AppT (PromotedT '(:^)) (toTString s)) (toInt i)
+toAssoc :: (String, R.Rational) -> Type
+toAssoc (s, r) = AppT (AppT (PromotedT '(:^)) (toTString s)) (toRat r)
 
 toTString :: String -> Type
 toTString = promotedListT . map (PromotedT . toTChar)
+
+toRat :: R.Rational -> Type
+toRat r = AppT (AppT (PromotedT '(:/)) (toInt a)) (toInt b)
+  where (a, b) = (R.numerator r, R.denominator r)
 
 toInt :: Integer -> Type
 toInt n

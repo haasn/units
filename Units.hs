@@ -8,7 +8,7 @@ module Units
   , lit, unU, coerceUnit
   ) where
 
-import Prelude hiding (Int, div)
+import Prelude hiding (Int, div, Rational)
 import Data.Singletons
 import Units.Types
 
@@ -23,7 +23,7 @@ promote [d|
   eqAList (x:xs)       []    = False
   eqAList ((s:^e):xs) (y:ys) = eqAList' e (extract s (y:ys))
 
-  eqAList' :: Int -> (Maybe Int, [Assoc]) -> Bool
+  eqAList' :: Rational -> (Maybe Rational, [Assoc]) -> Bool
   eqAList' e (Just e', _) = e == e'
   eqAList' _ (Nothing, _) = False
 
@@ -32,7 +32,7 @@ promote [d|
 
   -- Lookup
 
-  extract :: [TChar] -> [Assoc] -> (Maybe Int, [Assoc])
+  extract :: [TChar] -> [Assoc] -> (Maybe Rational, [Assoc])
   extract _  [] = (Nothing, [])
   extract s ((s':^e):xs) =
     if s == s'
@@ -47,9 +47,9 @@ promote [d|
   insertAdd :: Assoc -> [Assoc] -> [Assoc]
   insertAdd (s:^e) x = insertAdd' (s:^e) (extract s x)
 
-  insertAdd' :: Assoc -> (Maybe Int, [Assoc]) -> [Assoc]
+  insertAdd' :: Assoc -> (Maybe Rational, [Assoc]) -> [Assoc]
   insertAdd' v (Nothing, x)      = v:x
-  insertAdd' (s:^e) (Just e', x) = (s :^ addInt e e') : x
+  insertAdd' (s:^e) (Just e', x) = (s :^ addRat e e') : x
 
   -- Merging
 
@@ -62,21 +62,21 @@ promote [d|
 
   -- Multiplication with constant factor
 
-  mapMul :: Int -> [Assoc] -> [Assoc]
+  mapMul :: Rational -> [Assoc] -> [Assoc]
   mapMul _  []        = []
-  mapMul i ((s:^e):x) = (s :^ mulInt i e) : mapMul i x
+  mapMul r ((s:^e):x) = (s :^ mulRat r e) : mapMul r x
 
   recip :: Unit -> Unit
-  recip (EL a) = EL (mapMul im1 a)
+  recip (EL a) = EL (mapMul rm1 a)
 
-  powUnit :: Unit -> Int -> Unit
-  powUnit (EL a) i = EL (mapMul i a)
+  powUnit :: Unit -> Rational -> Unit
+  powUnit (EL a) r = EL (mapMul r a)
 
   -- Cleanup of 0s
 
   cleanup :: [Assoc] -> [Assoc]
   cleanup []         = []
-  cleanup ((s:^e):x) = if e == i0 then x else (s:^e) : cleanup x
+  cleanup ((s:^e):x) = if e == r0 then x else (s:^e) : cleanup x
   |]
 
 type instance (a :: Unit) :==: (b :: Unit) = EqUnit a b
@@ -92,9 +92,15 @@ type instance a/b = MultUnit a (Recip b)
 infixl 7 /
 
 type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
-type instance a^b = PowUnit a (IntLit b)
+type instance a^b = PowUnit a (IntLit b :/ I1)
 infixr 8 ^
 
+type family (a :: Unit) ^^ (b :: Rational) :: Unit
+type instance a^^b = PowUnit a b
+infixr 8 ^^
+
+type family (a :: GHC.Nat) % (b :: GHC.Nat) :: Rational
+type instance a%b = MkRatio (IntLit a) (IntLit b)
 
 -- Type-safe unit calculations
 
