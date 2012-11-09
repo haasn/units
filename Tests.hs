@@ -44,13 +44,7 @@ makeUnit ''Yard
 yards :: Fractional a => a :@ Yard -> a :@ Meter
 yards = (*) (0.9144 * meter/yard)
 
--- Test num injection
+-- Example of unit-like literals
 
-instance (Num a, u ~ One) => Num (a :@ u) where
-  fromInteger = n . fromInteger
-
-instance (Fractional a, u ~ One) => Fractional (a :@ u) where
-  fromRational = n . fromRational
-
-test9 :: Double :@ Newton
-test9 = 1*newton
+hour :: Num a => a :@ Second
+hour = 3600 * second

@@ -52,7 +52,7 @@ promote [d|
   -- Merging
 
   mergeAdd :: [Assoc] -> [Assoc] -> [Assoc]
-  mergeAdd []   y = y
+  mergeAdd  []   y = y
   mergeAdd (v:x) y = insertAdd v (mergeAdd x y)
 
   multUnit :: Unit -> Unit -> Unit
