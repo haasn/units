@@ -2,7 +2,7 @@
   , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
 module Units
   ( (:@)()
-  , (*)(), (/)(), (^)()
+  , (*)(), (/)(), (^)(), (^^)(), (%)(), Sqrt
   , One
   , addU, subU, mulU, divU
   , lit, unU, coerceUnit
@@ -101,6 +101,10 @@ infixr 8 ^^
 
 type family (a :: GHC.Nat) % (b :: GHC.Nat) :: Rational
 type instance a%b = MkRatio (IntLit a) (IntLit b)
+infix 9 %
+
+type family Sqrt (a :: Unit) :: Unit
+type instance Sqrt a = a ^^ (1%2)
 
 -- Type-safe unit calculations
 

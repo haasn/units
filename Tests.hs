@@ -9,6 +9,7 @@ import Units
 import Units.Prelude
 import Units.TH
 import Units.SI
+import Units.Planck
 
 -- Tests
 
@@ -54,3 +55,8 @@ toKMH mps = mps * (3600 * second/hour) / (1000/kilo)
 
 testkmh :: ((Kilo*Meter/Hour) :==: (Meter/Hour*Kilo)) ~ True => ()
 testkmh = ()
+
+-- Some testing of the sqrt stuff
+
+testplanck :: (Volume :==: Sqrt ((HBar*G)^3 / C^9)) ~ True => ()
+testplanck = ()
