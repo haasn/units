@@ -5,7 +5,7 @@ module Units
   , (*)(), (/)(), (^)()
   , One
   , addU, subU, mulU, divU
-  , lit, coerceUnit
+  , lit, unU, coerceUnit
   ) where
 
 import Prelude hiding (Int, div)
@@ -110,8 +110,11 @@ mulU (U a) (U b) = U (a*b)
 divU :: Fractional a => a:@u -> a:@v -> a:@(u/v)
 divU (U a) (U b) = U (a/b)
 
-lit :: a -> a:@One
+lit :: a -> a :@ One
 lit = U
+
+unU :: a :@ One -> a
+unU (U a) = a
 
 -- Type-unsafe unit calculations
 
