@@ -8,8 +8,14 @@ license-file:        LICENSE
 author:              nand@lavabit.com
 maintainer:          nand@lavabit.com
 stability:           Experimental
+category:            Units
 build-type:          Simple
 cabal-version:       >=1.8
+tested-with:         GHC == 7.6.1
+
+source-repository head
+  type:                darcs
+  location:            http://hub.darcs.net/nand/units
 
 library
   exposed-modules:     Units
@@ -38,6 +44,10 @@ library
                        -fno-warn-orphans
                        -fno-warn-unused-binds
 
-source-repository head
-  type:                darcs
-  location:            http://hub.darcs.net/nand/units
+test-suite tests
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      tests
+  main-is:             Tests.hs
+
+  build-depends:       base == 4.6.*,
+                       units

@@ -1,4 +1,13 @@
 {-# LANGUAGE FlexibleInstances, TypeFamilies, TypeOperators, DataKinds #-}
+-- | Functions to replace the numerical functions from the Prelude.
+--   See "Units" for the documentation of '(+)', '(-)', '(*)' and '(/)'.
+--
+--   This module includes Num and Fractional instances for '(:@)', which
+--   implement 'fromInteger' and 'fromRational', to avoid having to use 'lit'
+--   on every single numeric literal. This allows, for example:
+--
+--   > 5 * meter
+
 module Units.Prelude
   ( (Units.Prelude.+)
   , (Units.Prelude.-)
@@ -29,8 +38,8 @@ instance (Num a, u ~ One) => Num (a :@ u) where
 
   (+)    = error "Use Units.Prelude.+"
   (*)    = error "Use Units.Prelude.*"
-  abs    = lit . abs . unU
-  signum = lit . abs . unU
+  abs    = lit . abs . unTag
+  signum = lit . abs . unTag
 
 instance (Fractional a, u ~ One) => Fractional (a :@ u) where
   fromRational = lit . fromRational

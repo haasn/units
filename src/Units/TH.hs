@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
-module Units.TH (u, makeUnit, makeUnits) where
+-- | TemplateHaskell functions for introducing new units.
+module Units.TH (u , makeUnit, makeUnits) where
 
 import Prelude hiding (div, exp, Rational)
 
@@ -107,10 +108,44 @@ quoteUnitT = return . AppT (PromotedT 'EL) . toUnit . flatten . parseUnit
 quoteUnitE :: String -> Q Exp
 quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
 
+-- | A QuasiQuoter for units, with the following syntax:
+--
+--   * A unit itself is a nonempty string of upper case or lower case
+--     letters, like ‘kg’ or ‘J’.
+--
+--   * Units may be combined with *, /, or exponentiated to a positive rational
+--     exponent with ^. The exponent follows the syntactical rules of numeric
+--     literals in Haskell, eg. ‘m^2’ or ‘s^0.5’.
+--
+--   * Units may be surrounded by parentheses, eg. ‘a/(b*c)’
+--
+--   Most of the time, you'd just want to use a name alone, eg.
+--
+--   > type Meter = [u|m|]
+--
+--   Note that these units live in the same namespace:
+--
+--   > type Foo = [u|abc|]
+--   > type Bar = [u|abc|]
+--
+--   ‘Foo’ and ‘Bar’ refer to the same unit, that is, Foo ~ Bar
+
 u :: QuasiQuoter
 u = QuasiQuoter quoteUnitE undefined quoteUnitT undefined
 
 -- Demote a unit to the value level
+
+-- | A TemplateHaskell function for constructing the value-level units that
+--   correspond to each unit type. You want to use this for each named unit
+--   introduced.
+--
+--   @
+--     type Foo = [u|foo|]
+--     makeUnit ''Foo
+--   @
+--
+--   In this example, 'makeUnit' generates a value ‘foo :: Num a => a :\@ Foo’.
+--   The name used is just the type name with the first letter made lower case.
 
 makeUnit :: Name -> Q [Dec]
 makeUnit n = do
@@ -121,6 +156,9 @@ makeUnit n = do
   v = mkName $ uncap (nameBase n)
   uncap  ""    = ""
   uncap (h:xs) = toLower h : xs
+
+-- | Like 'makeUnit' but works on multiple names at once. Provided for
+--   convenience.
 
 makeUnits :: [Name] -> Q [Dec]
 makeUnits = fmap concat . mapM makeUnit

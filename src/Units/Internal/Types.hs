@@ -199,12 +199,11 @@ promote [d|
     deriving (Show, Eq, Ord)
   |]
 
--- Type for tagging values with units
+-- | Type for tagging values with units. Use 'lit' for constructing values
+--   of this type.
 
 data a :@ (u :: Unit) = U a deriving Show
 infix 5 :@
-
-type One = EL '[]
 
 -- Injection of built-int Nat -> Int
 
