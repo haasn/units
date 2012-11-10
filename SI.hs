@@ -46,7 +46,7 @@ type Tera  = Kilo^4
 type Peta  = Kilo^5
 type Exa   = Kilo^6
 type Zetta = Kilo^7
-type Yotta = Kilo^7
+type Yotta = Kilo^8
 
 makeUnits [ ''Deca , ''Hecto, ''Kilo, ''Mega, ''Giga, ''Tera, ''Peta, ''Exa
           , ''Zetta, ''Yotta ]
