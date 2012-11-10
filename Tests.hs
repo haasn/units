@@ -19,14 +19,8 @@ test1 = 1*meter + 2*meter
 test2 :: Double :@ Second
 test2 = 5*second
 
-test3 :: ([u|foo*bar|] :==: [u|bar*foo|]) ~ True => ()
-test3 = ()
-
 test4 :: Double :@ Meter*Second
 test4 = test1 * test2
-
-test5 :: (((Meter*Meter) :==: [u|m²|]) ~ True) => ()
-test5 = ()
 
 test6 :: Double :@ Meter/Second
 test6 = test4 / (test2 * test2)
@@ -53,10 +47,10 @@ makeUnit ''Hour
 toKMH :: Fractional a => a :@ Meter/Second -> a :@ Meter/Hour*Kilo
 toKMH mps = mps * (3600 * second/hour) / (1000/kilo)
 
-testkmh :: ((Kilo*Meter/Hour) :==: (Meter/Hour*Kilo)) ~ True => ()
+testkmh :: (Kilo*Meter/Hour) ~ (Meter/Hour*Kilo)  => ()
 testkmh = ()
 
 -- Some testing of the sqrt stuff
 
-testplanck :: (Volume :==: Sqrt ((HBar*G)^3 / C^9)) ~ True => ()
+testplanck :: Volume ~ (Sqrt ((HBar*G)^3 / C^9)) => ()
 testplanck = ()

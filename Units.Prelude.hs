@@ -10,11 +10,11 @@ import Data.Singletons
 import Units
 import Units.Types
 
-(+) :: (Num a, (u :==: v) ~ True) => a :@ u -> a :@ v -> a :@ u
+(+) :: Num a => a :@ u -> a :@ u -> a :@ u
 (+) = addU
 infixl 6 +
 
-(-) :: (Num a, (u :==: v) ~ True) => a :@ u -> a :@ v -> a :@ u
+(-) :: Num a => a :@ u -> a :@ u -> a :@ u
 (-) = subU
 infixl 6 -
 

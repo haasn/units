@@ -4,6 +4,7 @@ module Units.Types where
 
 import Prelude hiding (Int)
 import Data.Singletons
+import Type.Compare
 
 import qualified GHC.TypeLits as GHC (Nat)
 
@@ -219,3 +220,29 @@ type instance IntLit 7 = I7
 type instance IntLit 8 = I8
 type instance IntLit 9 = I9
 
+-- Comparison of type-level characters and associations
+
+makeOrd ''TChar
+
+type instance Compare (a :^ e) (b :^ f) = Compare a b
+
+-- Sorting algorithm for type-level lists
+
+sort :: [Assoc] -> [Assoc]
+sort = undefined -- Just get this here for the promotion
+
+type family Sort (xs :: [k]) :: [k]
+
+type instance Sort    '[]    = '[]
+type instance Sort (x ': xs) = Insert x (Sort xs)
+
+type family Insert (x :: k) (xs :: [k]) :: [k]
+
+type instance Insert x    '[]    = '[x]
+type instance Insert x (y ': ys) = Insert' (Compare x y) x y ys
+
+type family Insert' (o :: Ordering) (x :: k) (y :: k) (ys :: [k]) :: [k]
+
+type instance Insert' EQ x y ys = x ': y ': ys
+type instance Insert' LT x y ys = x ': y ': ys
+type instance Insert' GT x y ys = y ': Insert x ys

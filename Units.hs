@@ -15,21 +15,6 @@ import Units.Types
 import qualified GHC.TypeLits as GHC (Nat)
 
 promote [d|
-  -- Equality checking
-
-  eqAList :: [Assoc] -> [Assoc] -> Bool
-  eqAList  []          []    = True
-  eqAList  []         (x:xs) = False
-  eqAList (x:xs)       []    = False
-  eqAList ((s:^e):xs) (y:ys) = eqAList' e (extract s (y:ys))
-
-  eqAList' :: Rational -> (Maybe Rational, [Assoc]) -> Bool
-  eqAList' e (Just e', _) = e == e'
-  eqAList' _ (Nothing, _) = False
-
-  eqUnit :: Unit -> Unit -> Bool
-  eqUnit (EL a) (EL b) = eqAList a b
-
   -- Lookup
 
   extract :: [TChar] -> [Assoc] -> (Maybe Rational, [Assoc])
@@ -58,7 +43,7 @@ promote [d|
   mergeAdd (v:x) y = insertAdd v (mergeAdd x y)
 
   multUnit :: Unit -> Unit -> Unit
-  multUnit (EL a) (EL b) = EL (cleanup (mergeAdd a b))
+  multUnit (EL a) (EL b) = EL (normalize (mergeAdd a b))
 
   -- Multiplication with constant factor
 
@@ -72,14 +57,16 @@ promote [d|
   powUnit :: Unit -> Rational -> Unit
   powUnit (EL a) r = EL (mapMul r a)
 
-  -- Cleanup of 0s
+  -- Cleanup of 0s and sorting
 
   cleanup :: [Assoc] -> [Assoc]
   cleanup []         = []
   cleanup ((s:^e):x) = if e == r0 then x else (s:^e) : cleanup x
-  |]
 
-type instance (a :: Unit) :==: (b :: Unit) = EqUnit a b
+  normalize :: [Assoc] -> [Assoc]
+  normalize xs = sort (cleanup xs)
+
+  |]
 
 -- Pretty operators for combining types
 
@@ -108,16 +95,16 @@ type instance Sqrt a = a ^^ (1%2)
 
 -- Type-safe unit calculations
 
-addU :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
+addU :: Num a => a :@ u -> a :@ u -> a :@ u
 addU (U a) (U b) = U (a+b)
 
-subU :: (Num a, (u :==: v) ~ True) => a:@u -> a:@v -> a:@u
+subU :: Num a => a :@ u -> a :@ u -> a :@ u
 subU (U a) (U b) = U (a-b)
 
-mulU :: Num a => a:@u -> a:@v -> a:@(u*v)
+mulU :: Num a => a :@ u -> a :@ v -> a :@ u*v
 mulU (U a) (U b) = U (a*b)
 
-divU :: Fractional a => a:@u -> a:@v -> a:@(u/v)
+divU :: Fractional a => a :@ u -> a :@ v -> a :@ u/v
 divU (U a) (U b) = U (a/b)
 
 lit :: a -> a :@ One
