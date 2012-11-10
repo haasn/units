@@ -7,8 +7,8 @@ import Units.SI (Cent)
 
 -- Full list of currency names by ISO codes
 
-type EUR = [u|EUR|] -- ^ Euro
-type USD = [u|USD|] -- ^ United States Dollar
+type EUR = [u|EUR|] -- ^ European euro
+type USD = [u|USD|] -- ^ United States dollar
 type CNY = [u|CNY|] -- ^ Chinese yuan
 type JPY = [u|JPY|] -- ^ Japanese yen
 type GBP = [u|GBP|] -- ^ British pound
