@@ -3,8 +3,6 @@
 module Tests where
 import Prelude hiding ((+), (-), (*), (/))
 
-import Data.Singletons
-
 import Units
 import Units.Prelude
 import Units.TH
@@ -44,7 +42,7 @@ yards = (*) (0.9144 * meter/yard)
 type Hour = [u|h|]
 makeUnit ''Hour
 
-toKMH :: Fractional a => a :@ Meter/Second -> a :@ Meter/Hour*Kilo
+toKMH :: Fractional a => a :@ Meter/Second -> a :@ Kilo*Meter/Hour
 toKMH mps = mps * (3600 * second/hour) / (1000/kilo)
 
 testkmh :: (Kilo*Meter/Hour) ~ (Meter/Hour*Kilo)  => ()
