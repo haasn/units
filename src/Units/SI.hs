@@ -53,18 +53,19 @@ makeUnits [ ''Deca , ''Hecto, ''Kilo, ''Mega, ''Giga, ''Tera, ''Peta, ''Exa
           , ''Zetta, ''Yotta ]
 
 type Deci  = One / Deca -- ^ 1/deca = 10^-1
-type Centi = Deci^2     -- 1/100 = 10^-2
-type Milli = Deci^3     -- 1/1000 = 10^-3
-type Micro = Milli^2    -- 1000^-2 = 10^-6
-type Nano  = Milli^3    -- 1000^-3 = 10^-9
-type Pico  = Milli^4    -- 1000^-4 = 10^-12
-type Femto = Milli^5    -- 1000^-5 = 10^-15
-type Atto  = Milli^6    -- 1000^-6 = 10^-18
-type Zepto = Milli^7    -- 1000^-7 = 10^-21
-type Yocto = Milli^8    -- 1000^-8 = 10^-24
+type Centi = Deci^2     -- ^ 1/100 = 10^-2
+type Cent  = Centi      -- ^ Renamed version of Centi, eg. for currencies
+type Milli = Deci^3     -- ^ 1/1000 = 10^-3
+type Micro = Milli^2    -- ^ 1000^-2 = 10^-6
+type Nano  = Milli^3    -- ^ 1000^-3 = 10^-9
+type Pico  = Milli^4    -- ^ 1000^-4 = 10^-12
+type Femto = Milli^5    -- ^ 1000^-5 = 10^-15
+type Atto  = Milli^6    -- ^ 1000^-6 = 10^-18
+type Zepto = Milli^7    -- ^ 1000^-7 = 10^-21
+type Yocto = Milli^8    -- ^ 1000^-8 = 10^-24
 
-makeUnits [ ''Deci , ''Centi, ''Milli, ''Micro, ''Nano, ''Pico, ''Femto, ''Atto
-          , ''Zepto, ''Yocto ]
+makeUnits [ ''Deci , ''Centi, ''Cent , ''Milli, ''Micro, ''Nano, ''Pico
+          , ''Femto, ''Atto , ''Zepto, ''Yocto ]
 
 -- These are technically equivalent to some existing units but are kept
 -- separate because they have different semantics
