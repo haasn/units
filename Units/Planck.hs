@@ -2,7 +2,6 @@
 module Units.Planck where
 
 import Units
-import Units.TH
 
 -- Physical constants from which units are derived
 

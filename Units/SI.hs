@@ -2,7 +2,6 @@
 module Units.SI where
 
 import Units
-import Units.TH
 
 -- SI base units
 

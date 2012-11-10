@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
-module Units.TH (ts, u, makeUnit, makeUnits) where
+module Units.TH (u, makeUnit, makeUnits) where
 
 import Prelude hiding (div, exp, Rational)
 
@@ -12,7 +12,7 @@ import qualified Data.Map   as M
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
-import Units.Types
+import Units.Internal.Types
 
 import Text.Parsec
 import Text.Parsec.Expr
@@ -39,6 +39,7 @@ promotedListT :: [Type] -> Type
 promotedListT  []    = PromotedNilT
 promotedListT (x:xs) = AppT (AppT PromotedConsT x) (promotedListT xs)
 
+-- No longer needed here, but perhaps it may come in handy sometime else
 ts :: QuasiQuoter
 ts = QuasiQuoter
   (return . ListE . map (ConE . toTChar))

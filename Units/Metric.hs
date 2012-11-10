@@ -6,7 +6,6 @@ module Units.Metric
 
 import Units
 import Units.SI
-import Units.TH
 
 -- Some widely used non-SI units
 

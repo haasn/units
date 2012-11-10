@@ -1,10 +1,10 @@
 {-# LANGUAGE DataKinds, TemplateHaskell, TypeFamilies, TypeOperators
   , UndecidableInstances, PolyKinds #-}
-module Units.Types where
+module Units.Internal.Types where
 
 import Prelude hiding (Int)
 import Data.Singletons
-import Type.Compare
+import Units.Internal.TypeOrd
 
 import qualified GHC.TypeLits as GHC (Nat)
 

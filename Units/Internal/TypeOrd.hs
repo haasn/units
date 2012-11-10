@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, DataKinds, PolyKinds
   , TypeOperators, UndecidableInstances #-}
-module Type.Compare (Compare, makeOrd) where
+module Units.Internal.TypeOrd (Compare, makeOrd) where
 
 import Control.Monad (liftM2)
 import Language.Haskell.TH

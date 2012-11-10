@@ -1,11 +1,10 @@
 {-# LANGUAGE DataKinds, TypeFamilies, TemplateHaskell, QuasiQuotes
   , TypeOperators #-}
-module Tests where
+module Units.Internal.Tests where
 import Prelude hiding ((+), (-), (*), (/))
 
 import Units
 import Units.Prelude
-import Units.TH
 import Units.Metric
 import Units.Planck
 

@@ -1,7 +1,8 @@
 {-# LANGUAGE KindSignatures, DataKinds, TemplateHaskell, TypeFamilies
   , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
 module Units
-  ( (:@)()
+  ( module Units.TH
+  , (:@)()
   , (*)(), (/)(), (^)(), (^^)(), (%)(), Sqrt
   , One
   , addU, subU, mulU, divU
@@ -10,7 +11,9 @@ module Units
 
 import Prelude hiding (Int, div, Rational)
 import Data.Singletons
-import Units.Types
+
+import Units.Internal.Types
+import Units.TH
 
 import qualified GHC.TypeLits as GHC (Nat)
 
