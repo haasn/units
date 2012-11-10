@@ -1,5 +1,7 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators #-}
-module Units.NonSI where
+module Units.Metric
+  ( module Units.SI
+  ) where
 
 import Units
 import Units.SI

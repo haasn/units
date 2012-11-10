@@ -6,9 +6,7 @@ module Units.Prelude
   , (Units.Prelude./)
   ) where
 
-import Data.Singletons
 import Units
-import Units.Types
 
 (+) :: Num a => a :@ u -> a :@ u -> a :@ u
 (+) = addU
@@ -27,7 +25,7 @@ infixl 7 *
 infixl 7 /
 
 instance (Num a, u ~ One) => Num (a :@ u) where
-  fromInteger = U . fromInteger
+  fromInteger = lit . fromInteger
 
   (+)    = error "Use Units.Prelude.+"
   (*)    = error "Use Units.Prelude.*"
@@ -35,7 +33,7 @@ instance (Num a, u ~ One) => Num (a :@ u) where
   signum = lit . abs . unU
 
 instance (Fractional a, u ~ One) => Fractional (a :@ u) where
-  fromRational = U . fromRational
+  fromRational = lit . fromRational
 
   (/)   = error "Use Units.Prelude./"
   recip = error "Use Units.recip"

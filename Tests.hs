@@ -6,7 +6,7 @@ import Prelude hiding ((+), (-), (*), (/))
 import Units
 import Units.Prelude
 import Units.TH
-import Units.SI
+import Units.Metric
 import Units.Planck
 
 -- Tests
