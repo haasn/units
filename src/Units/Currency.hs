@@ -97,6 +97,8 @@ type SVC = [u|SVC|] -- ^ Salvadoran colón
 type TTD = [u|TTD|] -- ^ Trinidad and Tobago dollar
 type BOB = [u|BOB|] -- ^ Bolivian boliviano
 
+type BTC = [u|BTC|] -- ^ Bitcoin
+
 makeUnits
  [ ''EUR, ''USD, ''CNY, ''JPY, ''GBP, ''BRL, ''INR, ''CAD, ''RUB, ''AUD, ''MXN
  , ''KRW, ''TRY, ''IDR, ''CHF, ''PLN, ''SEK, ''SAR, ''NOK, ''VEF, ''IRR, ''ARS
@@ -106,18 +108,19 @@ makeUnits
  , ''HRK, ''SYP, ''OMR, ''BYR, ''AZN, ''DOP, ''LKR, ''BGN, ''TND, ''MMK, ''GTQ
  , ''UYU, ''LBP, ''UZS, ''RSD, ''LTL, ''CRC, ''YER, ''GHS, ''KES, ''IQD, ''JOD
  , ''MOP, ''ETB, ''PAB, ''LVL, ''XAF, ''TMT, ''BHD, ''XOF, ''TZS, ''SVC, ''TTD
- , ''BOB
+ , ''BOB, ''BTC
  ]
 
 -- More familiar names for the most popular currencies
 
-type Euro   = EUR
-type Dollar = USD
-type Yuan   = CNY
-type Yen    = JPY
-type Pound  = GBP
+type Euro    = EUR
+type Dollar  = USD
+type Yuan    = CNY
+type Yen     = JPY
+type Pound   = GBP
+type Bitcoin = BTC
 
-makeUnits [ ''Euro, ''Dollar, ''Yuan, ''Yen, ''Pound ]
+makeUnits [ ''Euro, ''Dollar, ''Yuan, ''Yen, ''Pound, ''Bitcoin ]
 
 -- Renamed versions of subdivisions
 
@@ -126,6 +129,7 @@ type USCent   = USD *Cent
 type Fen      = Yuan*Cent
 type Sen      = Yen *Cent
 type Penny    = GBP *Cent
+type Bitcent  = BTC *Cent
 
-makeUnits [ ''EuroCent, ''USCent, ''Fen, ''Sen, ''Penny ]
+makeUnits [ ''EuroCent, ''USCent, ''Fen, ''Sen, ''Penny, ''Bitcent ]
 
