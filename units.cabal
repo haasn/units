@@ -1,0 +1,43 @@
+name:                units
+version:             0.1.0
+synopsis:            Calculations with type-safe physical units
+
+homepage:            http://hub.darcs.net/nand/units
+license:             BSD3
+license-file:        LICENSE
+author:              nand@lavabit.com
+maintainer:          nand@lavabit.com
+stability:           Experimental
+build-type:          Simple
+cabal-version:       >=1.8
+
+library
+  exposed-modules:     Units
+                       Units.TH
+                       Units.Prelude
+                       Units.SI
+                       Units.Metric
+                       Units.Planck
+
+  other-modules:       Units.Internal.Types
+                       Units.Internal.TypeOrd
+
+  hs-source-dirs:      src
+
+  build-depends:       base == 4.6.*,
+                       singletons == 0.8.*,
+                       containers == 0.5.*,
+                       template-haskell == 2.8.*,
+                       parsec == 3.1.*
+
+  ghc-options:
+                       -Wall
+                       -fno-warn-unused-matches
+                       -fno-warn-name-shadowing
+                       -fno-warn-type-defaults
+                       -fno-warn-orphans
+                       -fno-warn-unused-binds
+
+source-repository head
+  type:                darcs
+  location:            http://hub.darcs.net/nand/units
