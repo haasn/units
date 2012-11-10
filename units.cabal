@@ -24,6 +24,7 @@ library
                        Units.SI
                        Units.Metric
                        Units.Planck
+                       Units.Currency
 
   other-modules:       Units.Internal.Types
                        Units.Internal.TypeOrd
