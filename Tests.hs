@@ -39,9 +39,6 @@ yards = (*) (0.9144 * meter/yard)
 
 -- Example of unit-like literals
 
-type Hour = [u|h|]
-makeUnit ''Hour
-
 toKMH :: Fractional a => a :@ Meter/Second -> a :@ Kilo*Meter/Hour
 toKMH mps = mps * (3600 * second/hour) / (1000/kilo)
 

@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators #-}
 module Units.Metric
-  ( module Units.SI
+  ( module Units.Metric
+  , module Units.SI
   ) where
 
 import Units
