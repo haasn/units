@@ -28,7 +28,7 @@ makeUnits [ ''Length, ''Mass, ''Time, ''Charge, ''Temperature ]
 -- Derived units
 
 type Area      = Length^2          -- ^ = ħ·G/c³
-type Volume    = Length^3          -- ^ = √((ħ·G)³/c^9)    FIXME
+type Volume    = Length^3          -- ^ = √((ħ·G)³/c⁹)
 type Momentum  = Mass * C          -- ^ = √(ħ·c³/G)
 type Energy    = Mass * C^2        -- ^ = √(ħ·c⁵/G)
 type Force     = Energy / Length   -- ^ = c⁴/G
