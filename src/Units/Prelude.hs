@@ -12,7 +12,8 @@
 --   regular numbers without having to constantly untag/retag them.
 
 module Units.Prelude
-  ( (Units.Prelude.+)
+  ( module Units
+  , (Units.Prelude.+)
   , (Units.Prelude.-)
   , (Units.Prelude.*)
   , (Units.Prelude./)

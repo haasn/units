@@ -1,9 +1,12 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators
+  , TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
 -- | An implementation of the base and derived SI units, as well as
 --   numeric prefixes.
 module Units.SI where
 
-import Units
+import Prelude hiding ((/),(*),(+),(-))
+import Units.Prelude
+import Units.Convert
 
 -- SI base units
 
@@ -84,3 +87,13 @@ type Lux   = Lumen / Meter^2     -- ^ Unit of illuminance = lm/m²
 type Katal = Mole / Second       -- ^ Unit of catalytic activity = mol/s
 
 makeUnits [ ''Lumen, ''Lux, ''Katal ]
+
+-- Automatic conversions of units. How to scale this elegantly?
+
+instance Convert Celsius Kelvin where
+  type C Celsius Kelvin = Fractional
+  convert c = (c/celsius + 273.15)*kelvin
+
+instance Convert Kelvin Celsius where
+  type C Kelvin Celsius = Fractional
+  convert k = (k/kelvin - 273.15)*celsius
