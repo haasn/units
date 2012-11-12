@@ -202,8 +202,11 @@ promote [d|
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
 
-data a :@ (u :: Unit) = U a deriving Show
+data a :@ (u :: Unit) = U a
 infix 5 :@
+
+instance Show a => Show (a :@ u) where
+  show (U x) = show x
 
 -- Injection of built-int Nat -> Int
 

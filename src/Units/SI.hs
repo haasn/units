@@ -82,18 +82,14 @@ type Sievert    = [u|Sv |] -- ^ Unit of equivalent dosem symbol ‘Sv’
 
 makeUnits [ ''Mole, ''Radian, ''Steradian, ''Celsius, ''Becquerell, ''Sievert ]
 
+instance IsoUnit Mole where
+  type Base Mole = One
+  type Ctx  Mole = Fractional
+  toBase   v = v * (6.0221417930e23/mole)
+  fromBase v = v / (6.0221417930e23/mole)
+
 type Lumen = Candela * Steradian -- ^ Unit of luminous flux = cd·sr
 type Lux   = Lumen / Meter^2     -- ^ Unit of illuminance = lm/m²
 type Katal = Mole / Second       -- ^ Unit of catalytic activity = mol/s
 
 makeUnits [ ''Lumen, ''Lux, ''Katal ]
-
--- Automatic conversions of units. How to scale this elegantly?
-
-instance Convert Celsius Kelvin where
-  type C Celsius Kelvin = Fractional
-  convert c = (c/celsius + 273.15)*kelvin
-
-instance Convert Kelvin Celsius where
-  type C Kelvin Celsius = Fractional
-  convert k = (k/kelvin - 273.15)*celsius

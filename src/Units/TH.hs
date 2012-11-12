@@ -9,6 +9,7 @@ import Control.Applicative hiding ((<|>))
 import Data.Char (toLower)
 import qualified Data.Ratio as R
 import qualified Data.Map   as M
+import Data.Maybe (fromMaybe)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
@@ -52,8 +53,9 @@ ts = QuasiQuoter
 
 data UnitExp = Unit String R.Rational | Mult UnitExp UnitExp | Recip UnitExp
 
-parseUnit :: String -> UnitExp
-parseUnit = either (error . show) id . parse (spaces *> unit) "Unit QuasiQuoter"
+parseUnit :: String -> Maybe UnitExp
+parseUnit = either (error . show) id . parse (spaces *> p) "Unit QuasiQuoter"
+  where p = optionMaybe unit
 
 unit, name, prim :: Parser UnitExp
 unit = buildExpressionParser ops prim
@@ -71,7 +73,10 @@ name = Unit <$> many1 letter <* spaces <*> option 1 exp
   nums = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
 
 rational :: Parser R.Rational
-rational = either fromInteger toRational <$> naturalOrFloat haskell
+rational = neg $ either fromInteger toRational <$> naturalOrFloat haskell
+ where
+  neg :: Num a => Parser a -> Parser a
+  neg p = negate <$ char '-' <*> p <|> p
 
 flatten :: UnitExp -> M.Map String R.Rational
 flatten (Unit s r) = M.singleton s r
@@ -103,7 +108,10 @@ toNat 0 = PromotedT 'N0
 toNat n = AppT (PromotedT 'NS) (toNat (n-1))
 
 quoteUnitT :: String -> Q Type
-quoteUnitT = return . AppT (PromotedT 'EL) . toUnit . flatten . parseUnit
+quoteUnitT = return . p . toUnit . l . fmap flatten . parseUnit
+ where
+  p = AppT (PromotedT 'EL)
+  l = fromMaybe (M.empty)
 
 quoteUnitE :: String -> Q Exp
 quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
@@ -113,9 +121,11 @@ quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
 --   * A unit itself is a nonempty string of upper case or lower case
 --     letters, like ‘kg’ or ‘J’.
 --
---   * Units may be combined with *, /, or exponentiated to a positive rational
+--   * Units may be combined with *, /, or exponentiated to a rational
 --     exponent with ^. The exponent follows the syntactical rules of numeric
 --     literals in Haskell, eg. ‘m^2’ or ‘s^0.5’.
+--
+--   * Alternatively, units can be exponentiated with ‘²’, ‘³’ etc.
 --
 --   * Units may be surrounded by parentheses, eg. ‘a/(b*c)’
 --
