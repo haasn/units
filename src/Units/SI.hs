@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators
-  , TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses #-}
+  , TypeSynonymInstances, FlexibleInstances, MultiParamTypeClasses
+  , TypeFamilies #-}
 -- | An implementation of the base and derived SI units, as well as
 --   numeric prefixes.
 module Units.SI where
