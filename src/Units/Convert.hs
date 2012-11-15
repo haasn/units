@@ -1,5 +1,23 @@
 {-# LANGUAGE ConstraintKinds, TypeFamilies, TypeOperators, DataKinds
   , FlexibleInstances, TemplateHaskell, TypeSynonymInstances #-}
+-- | Attempt at a class-based unit conversion system. Current limitations
+--   are:
+--
+--   * Even fully applied type synonym families can't be made into instances,
+--     so you have to expand the units to their underlying representation
+--     manually.
+--
+--   * Type synonym families aren't reversible (Haskell isn't a constraint
+--     solver), so compound units can't be converted - they have to be taken
+--     apart and converted on an ad-hod basis.
+--
+--   The way the class works, to prevent exponential instance numbers like
+--   MPTC-based approaches need, is by converting to and from a common ‘base’
+--   unit that is used as common denominator between the two. In addition to
+--   the class, this module exports a bunch of arbitrarily chosen base units,
+--   defined as the SI units, as well as constraints for asserting something
+--   to be isomorphic to them.
+
 module Units.Convert where
 
 import Units.Internal.Types
@@ -10,6 +28,9 @@ import Language.Haskell.TH.Quote
 
 import Units
 
+-- | Class for units that are isomorphic to some common base, with the
+--   conversion requiring a certain context 'Ctx'. Use 'Empty' for none.
+
 class IsoUnit (u :: Unit) where
   type Base u :: Unit
   type Ctx  u :: * -> Constraint
@@ -17,10 +38,15 @@ class IsoUnit (u :: Unit) where
   toBase   :: Ctx u a => a :@ u -> a :@ Base u
   fromBase :: Ctx u a => a :@ Base u -> a :@ u
 
+-- | ‘Convert u j a’ requires IsoUnit u/j instances, asserts their bases as
+--   equal, and pulls in both value contexts.
+
 type Convert u j a = (IsoUnit u, IsoUnit j, Base u ~ Base j, Ctx u a, Ctx j a)
 
 convert :: Convert u j a => a :@ u -> a :@ j
 convert = fromBase . toBase
+
+-- | An empty context, with a valid instance for any type.
 
 class Empty a
 instance Empty a
