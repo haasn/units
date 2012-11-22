@@ -15,11 +15,10 @@ makeOrd n = do
 
 makeCompare :: (Name, Int) -> (Name, Int) -> Dec
 makeCompare (a, i) (b, j) = TySynInstD ''Compare [PromotedT a, PromotedT b] res
- where
-  res = case compare i j of
-    LT -> PromotedT 'LT
-    EQ -> PromotedT 'EQ
-    GT -> PromotedT 'GT
+  where res = case compare i j of
+          LT -> PromotedT 'LT
+          EQ -> PromotedT 'EQ
+          GT -> PromotedT 'GT
 
 -- List comparison
 

@@ -208,7 +208,8 @@ infix 5 :@
 instance Show a => Show (a :@ u) where
   show (U x) = show x
 
--- Injection of built-int Nat -> Int
+-- Injection of built-int Nat -> Int, ugly at the moment due to lack of
+-- proper Nat operators
 
 type family IntLit (a :: GHC.Nat) :: Int
 type instance IntLit 0 = I0

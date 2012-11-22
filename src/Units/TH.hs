@@ -159,13 +159,13 @@ u = QuasiQuoter quoteUnitE undefined quoteUnitT undefined
 
 makeUnit :: Name -> Q [Dec]
 makeUnit n = do
+  let v            = mkName $ uncap (nameBase n)
+      uncap  ""    = ""
+      uncap (h:xs) = toLower h : xs
+
   t <- [t|Num a => a :@ $(return (ConT n))|]
   b <- [e|U 1|]
   return [ SigD v t, ValD (VarP v) (NormalB b) [] ]
- where
-  v = mkName $ uncap (nameBase n)
-  uncap  ""    = ""
-  uncap (h:xs) = toLower h : xs
 
 -- | Like 'makeUnit' but works on multiple names at once. Provided for
 --   convenience.
