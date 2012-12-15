@@ -2,7 +2,7 @@
 -- | Units for commonly used currencies
 module Units.Currency where
 
-import Units
+import Units.Prelude
 import Units.SI (Cent)
 
 -- Full list of currency names by ISO codes

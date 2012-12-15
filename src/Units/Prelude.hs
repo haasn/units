@@ -13,6 +13,7 @@
 
 module Units.Prelude
   ( module Units
+  , module Units.TH
   , (Units.Prelude.+)
   , (Units.Prelude.-)
   , (Units.Prelude.*)
@@ -20,6 +21,7 @@ module Units.Prelude
   ) where
 
 import Units
+import Units.TH
 
 (+) :: Num a => a :@ u -> a :@ u -> a :@ u
 (+) = addU

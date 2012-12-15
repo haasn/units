@@ -1,9 +1,10 @@
+{-
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators #-}
 -- | Units of measure in the Planck system, which normalizes key physical
 --   constants to ‘1’ and derives all units from those.
 module Units.Planck where
 
-import Units
+import Units.Prelude
 
 -- Physical constants from which units are derived
 
@@ -43,3 +44,4 @@ type Impedance = Voltage / Current -- ^ = 1/(4πε₀)
 makeUnits
   [ ''Area   , ''Volume  , ''Momentum, ''Energy , ''Force, ''Power, ''Density
   , ''AngFreq, ''Pressure, ''Current , ''Voltage, ''Impedance ]
+-}

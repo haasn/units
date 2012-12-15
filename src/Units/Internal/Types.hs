@@ -100,6 +100,7 @@ promote [d|
 
   -- Rational numbers, as pairs of ints a/b
 
+  {-
   data Rational = Int :/ Int deriving Eq
 
   mkRatio :: Int -> Int -> Rational
@@ -178,16 +179,17 @@ promote [d|
 
   rm1, rm2, rm3, rm4, rm5 :: Rational
   rm1 = im1:/i1; rm2 = im2:/i1; rm3 = im3:/i1; rm4 = im4:/i1; rm5 = im5:/i1
+  -}
 
   -- Pretty association lists for units
 
-  data Assoc = [TChar] :^ Rational deriving Eq
+  data Assoc = [TChar] :^ Int deriving Eq
   data Unit = EL [Assoc]
 
   key :: Assoc -> [TChar]
   key (s:^_) = s
 
-  val :: Assoc -> Rational
+  val :: Assoc -> Int
   val (_:^e) = e
 
   -- Type-level ‘characters’
@@ -202,11 +204,15 @@ promote [d|
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
 
-data a :@ (u :: Unit) = U a
+data a :@ (u :: Unit) = U
+  { value  :: a
+  , factor_old :: Maybe a -- u / Base u
+  }
+
 infix 5 :@
 
 instance Show a => Show (a :@ u) where
-  show (U x) = show x
+  show (U x _) = show x
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators

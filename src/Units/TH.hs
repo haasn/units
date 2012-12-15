@@ -1,13 +1,12 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
 -- | TemplateHaskell functions for introducing new units.
-module Units.TH (u , makeUnit, makeUnits) where
+module Units.TH (ts, u, makeUnit, makeUnits) where
 
-import Prelude hiding (div, exp, Rational)
+import Prelude hiding (div, exp, Rational, Int)
 
 import Control.Applicative hiding ((<|>))
 
 import Data.Char (toLower)
-import qualified Data.Ratio as R
 import qualified Data.Map   as M
 import Data.Maybe (fromMaybe)
 
@@ -20,7 +19,7 @@ import Text.Parsec
 import Text.Parsec.Expr
 import Text.Parsec.Language (haskell)
 import Text.Parsec.String
-import Text.Parsec.Token (parens, naturalOrFloat)
+import Text.Parsec.Token (parens, natural)
 
 -- Quasiquoter for TString
 
@@ -51,7 +50,7 @@ ts = QuasiQuoter
 
 -- Parser and quasiquoters for Unit
 
-data UnitExp = Unit String R.Rational | Mult UnitExp UnitExp | Recip UnitExp
+data UnitExp = Unit String Integer | Mult UnitExp UnitExp | Recip UnitExp
 
 parseUnit :: String -> Maybe UnitExp
 parseUnit = either (error . show) id . parse (spaces *> p) "Unit QuasiQuoter"
@@ -67,36 +66,46 @@ unit = buildExpressionParser ops prim
 prim = name <|> parens haskell unit
 name = Unit <$> many1 letter <* spaces <*> option 1 exp
  where
-  exp  = char '^' *> spaces *> rational <* spaces
+  exp  = char '^' *> spaces *> integer <* spaces
      <|> choice (zipWith (\n o -> n <$ char o) [0..] nums) <* spaces
 
   nums = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
 
+integer :: Parser Integer
+integer = neg $ natural haskell
+ where
+  neg :: Num a => Parser a -> Parser a
+  neg p = negate <$ char '-' <*> p <|> p
+
+{-
 rational :: Parser R.Rational
 rational = neg $ either fromInteger toRational <$> naturalOrFloat haskell
  where
   neg :: Num a => Parser a -> Parser a
   neg p = negate <$ char '-' <*> p <|> p
+-}
 
-flatten :: UnitExp -> M.Map String R.Rational
+flatten :: UnitExp -> M.Map String Integer
 flatten (Unit s r) = M.singleton s r
 flatten (Mult a b) = M.unionWith (+) (flatten a) (flatten b)
 flatten (Recip  m) = M.map negate (flatten m)
 
 -- Type generation for units
 
-toUnit :: M.Map String R.Rational -> Type
+toUnit :: M.Map String Integer -> Type
 toUnit = promotedListT . map toAssoc . filter ((/=0) . snd) . M.toList
 
-toAssoc :: (String, R.Rational) -> Type
-toAssoc (s, r) = AppT (AppT (PromotedT '(:^)) (toTString s)) (toRat r)
+toAssoc :: (String, Integer) -> Type
+toAssoc (s, r) = AppT (AppT (PromotedT '(:^)) (toTString s)) (toInt r)
 
 toTString :: String -> Type
 toTString = promotedListT . map (PromotedT . toTChar)
 
+{-
 toRat :: R.Rational -> Type
 toRat r = AppT (AppT (PromotedT '(:/)) (toInt a)) (toInt b)
   where (a, b) = (R.numerator r, R.denominator r)
+-}
 
 toInt :: Integer -> Type
 toInt n
@@ -114,7 +123,7 @@ quoteUnitT = return . p . toUnit . l . fmap flatten . parseUnit
   l = fromMaybe (M.empty)
 
 quoteUnitE :: String -> Q Exp
-quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
+quoteUnitE s = [| U 1 Nothing :: Num a => a :@ $(quoteUnitT s) |]
 
 -- | A QuasiQuoter for units, with the following syntax:
 --
@@ -164,7 +173,7 @@ makeUnit n = do
       uncap (h:xs) = toLower h : xs
 
   t <- [t|Num a => a :@ $(return (ConT n))|]
-  b <- [e|U 1|]
+  b <- [e|U 1 Nothing|]
   return [ SigD v t, ValD (VarP v) (NormalB b) [] ]
 
 -- | Like 'makeUnit' but works on multiple names at once. Provided for

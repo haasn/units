@@ -1,34 +1,39 @@
 {-# LANGUAGE KindSignatures, DataKinds, TemplateHaskell, TypeFamilies
   , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
 module Units
-  ( module Units.TH
-
   -- * Types
-  , (:@)(), One
+  ( (:@)(), One
 
   -- ** Type functions for combining units
-  , (*)(), (/)(), (^)(), (^^)(), (%)(), Sqrt
+  , (*)(), (/)(), (^)() --, (^^)(), (%)(), Sqrt
 
   -- * Type-safe calculations with units
   , addU, subU, mulU, divU
   , lit, unTag
 
+  {-
   -- * Type-unsafe functions
   , coerceUnit
+  -}
+
+  -- Exported for internal purposes
+  , Cleanup, Sort, Normalize
   ) where
 
-import Prelude hiding (Int, div, Rational)
+import Prelude hiding (Int, div)
+import Control.Applicative ((<|>))
+import Control.Monad (liftM2)
 import Data.Singletons
 
 import Units.Internal.Types
-import Units.TH
+--import Units.TH
 
 import qualified GHC.TypeLits as GHC (Nat)
 
 promote [d|
   -- Lookup
 
-  extract :: [TChar] -> [Assoc] -> (Maybe Rational, [Assoc])
+  extract :: [TChar] -> [Assoc] -> (Maybe Int, [Assoc])
   extract _  [] = (Nothing, [])
   extract s ((s':^e):xs) =
     if s == s'
@@ -43,9 +48,9 @@ promote [d|
   insertAdd :: Assoc -> [Assoc] -> [Assoc]
   insertAdd (s:^e) x = insertAdd' (s:^e) (extract s x)
 
-  insertAdd' :: Assoc -> (Maybe Rational, [Assoc]) -> [Assoc]
+  insertAdd' :: Assoc -> (Maybe Int, [Assoc]) -> [Assoc]
   insertAdd' v (Nothing, x)      = v:x
-  insertAdd' (s:^e) (Just e', x) = (s :^ addRat e e') : x
+  insertAdd' (s:^e) (Just e', x) = (s :^ addInt e e') : x
 
   -- Merging
 
@@ -58,21 +63,21 @@ promote [d|
 
   -- Multiplication with constant factor
 
-  mapMul :: Rational -> [Assoc] -> [Assoc]
+  mapMul :: Int -> [Assoc] -> [Assoc]
   mapMul _  []        = []
-  mapMul r ((s:^e):x) = (s :^ mulRat r e) : mapMul r x
+  mapMul r ((s:^e):x) = (s :^ mulInt r e) : mapMul r x
 
   recip :: Unit -> Unit
-  recip (EL a) = EL (mapMul rm1 a)
+  recip (EL a) = EL (mapMul im1 a)
 
-  powUnit :: Unit -> Rational -> Unit
+  powUnit :: Unit -> Int -> Unit
   powUnit (EL a) r = EL (mapMul r a)
 
   -- Cleanup of 0s and sorting
 
   cleanup :: [Assoc] -> [Assoc]
   cleanup []         = []
-  cleanup ((s:^e):x) = if e == r0 then x else (s:^e) : cleanup x
+  cleanup ((s:^e):x) = if e == i0 then x else (s:^e) : cleanup x
 
   normalize :: [Assoc] -> [Assoc]
   normalize xs = sort (cleanup xs)
@@ -111,7 +116,7 @@ infixl 7 /
 --   > a ^ 1 ~ a
 
 type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
-type instance a^b = PowUnit a (IntLit b :/ I1)
+type instance a^b = PowUnit a (IntLit b)
 infixr 8 ^
 
 -- | Exponentiate a unit to a rational exponent.
@@ -119,10 +124,11 @@ infixr 8 ^
 --   > a ^^ 0%1 ~ One
 --   > a ^^ 1%1 ~ a
 
-type family (a :: Unit) ^^ (b :: Rational) :: Unit
+type family (a :: Unit) ^^ (b :: Int) :: Unit
 type instance a^^b = PowUnit a b
 infixr 8 ^^
 
+{-
 -- | Construct a rational number from two natural numbers. This only works with
 --   arguments from 0 to 9, due to limitations in GHC's Nat kind.
 --
@@ -135,46 +141,48 @@ infix 9 %
 -- | Take the square root of a unit.
 --
 --   > Sqrt a ~ a ^^ 1%2
-
 type family Sqrt (a :: Unit) :: Unit
 type instance Sqrt a = a ^^ (1%2)
+-}
 
 -- Type-safe unit calculations
 
 -- | Add two numbers with units. The units have to align for this to work.
 
 addU :: Num a => a :@ u -> a :@ u -> a :@ u
-addU (U a) (U b) = U (a+b)
+addU (U a m) (U b n) = U (a+b) (m <|> n)
 
 -- | Subtract two numbers with units. As with addition, the units have to
 --   be identical.
 
 subU :: Num a => a :@ u -> a :@ u -> a :@ u
-subU (U a) (U b) = U (a-b)
+subU (U a m) (U b n) = U (a-b) (m <|> n)
 
 -- | Multiply two numbers with units, multiplying their units in the process.
 
 mulU :: Num a => a :@ u -> a :@ v -> a :@ u*v
-mulU (U a) (U b) = U (a*b)
+mulU (U a m) (U b n) = U (a*b) (liftM2 (*) m n)
 
 -- | Divide two fractionals with units, dividing their units in the process.
 
 divU :: Fractional a => a :@ u -> a :@ v -> a :@ u/v
-divU (U a) (U b) = U (a/b)
+divU (U a m) (U b n) = U (a/b) (liftM2 (/) m n)
 
--- | Project any value into a dimensionless quantity
+-- | Project any number into a dimensionless quantity
 
-lit :: a -> a :@ One
-lit = U
+lit :: Num a => a -> a :@ One
+lit n = U n (Just 1)
 
 -- | Untag a dimensionless quantity
 
 unTag :: a :@ One -> a
-unTag (U a) = a
+unTag (U a _) = a
 
+{-
 -- Type-unsafe unit calculations
 
 -- | Coerce the units while leaving the value unchanged
 
 coerceUnit :: a:@u -> a:@v
-coerceUnit (U a) = U a
+coerceUnit (U a _) = U a Nothing
+-}

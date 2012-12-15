@@ -1,4 +1,5 @@
-{-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators
+  , TypeSynonymInstances, FlexibleInstances, TypeFamilies #-}
 -- | Units in the metric system (which includes the SI system) as well as
 --   some other commonly used units which are not officially sanctioned.
 module Units.Metric
@@ -6,7 +7,8 @@ module Units.Metric
   , module Units.SI
   ) where
 
-import Units
+import Units.Prelude
+import Units.Convert
 import Units.SI
 
 -- Some widely used non-SI units
@@ -47,3 +49,25 @@ type Millibar   = Milli*Bar       -- ^ Unit of pressure = bar/1000
 type Atmosphere = [u|atm|]        -- ^ Unit of pressure, symbol ‘atm’
 
 makeUnits [ ''Bar, ''Millibar, ''Atmosphere ]
+
+-- For testing
+type Meter'  = [ts|m|]
+type Deca'   = [ts|deca|]
+type Second' = [ts|s|]
+type Hour'   = [ts|h|]
+
+instance IsoDim Meter' where
+  type From Meter' = Meter'
+  factor _ = 1
+
+instance IsoDim Deca' where
+  type From Deca' = '[]
+  factor _ = 10
+
+instance IsoDim Second' where
+  type From Second' = Second'
+  factor _ = 1
+
+instance IsoDim Hour' where
+  type From Hour' = Second'
+  factor _ = 3600
