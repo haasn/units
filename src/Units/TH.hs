@@ -123,7 +123,7 @@ quoteUnitT = return . p . toUnit . l . fmap flatten . parseUnit
   l = fromMaybe (M.empty)
 
 quoteUnitE :: String -> Q Exp
-quoteUnitE s = [| U 1 Nothing :: Num a => a :@ $(quoteUnitT s) |]
+quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
 
 -- | A QuasiQuoter for units, with the following syntax:
 --
@@ -173,7 +173,7 @@ makeUnit n = do
       uncap (h:xs) = toLower h : xs
 
   t <- [t|Num a => a :@ $(return (ConT n))|]
-  b <- [e|U 1 Nothing|]
+  b <- [e|U 1|]
   return [ SigD v t, ValD (VarP v) (NormalB b) [] ]
 
 -- | Like 'makeUnit' but works on multiple names at once. Provided for

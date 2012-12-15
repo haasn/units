@@ -101,7 +101,7 @@ instance GetNat n => GetNat (NS n) where
 type Convert u v = (Factor u, Factor v, Base u ~ Base v)
 
 convert :: forall a u v. (Fractional a, Convert u v) => a :@ u -> a :@ v
-convert (U n _) = U (n * f1 / f2) Nothing
+convert (U n) = U (n * f1 / f2)
   where f1 = getFactor (Proxy :: Proxy u)
         f2 = getFactor (Proxy :: Proxy v)
 

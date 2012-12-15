@@ -11,18 +11,14 @@ module Units
   , addU, subU, mulU, divU
   , lit, unTag
 
-  {-
   -- * Type-unsafe functions
   , coerceUnit
-  -}
 
   -- Exported for internal purposes
   , Cleanup, Sort, Normalize
   ) where
 
 import Prelude hiding (Int, div)
-import Control.Applicative ((<|>))
-import Control.Monad (liftM2)
 import Data.Singletons
 
 import Units.Internal.Types
@@ -119,70 +115,42 @@ type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
 type instance a^b = PowUnit a (IntLit b)
 infixr 8 ^
 
--- | Exponentiate a unit to a rational exponent.
---
---   > a ^^ 0%1 ~ One
---   > a ^^ 1%1 ~ a
-
-type family (a :: Unit) ^^ (b :: Int) :: Unit
-type instance a^^b = PowUnit a b
-infixr 8 ^^
-
-{-
--- | Construct a rational number from two natural numbers. This only works with
---   arguments from 0 to 9, due to limitations in GHC's Nat kind.
---
---   Dividing by 0 will cause type-checking to fail to terminate.
-
-type family (a :: GHC.Nat) % (b :: GHC.Nat) :: Rational
-type instance a%b = MkRatio (IntLit a) (IntLit b)
-infix 9 %
-
--- | Take the square root of a unit.
---
---   > Sqrt a ~ a ^^ 1%2
-type family Sqrt (a :: Unit) :: Unit
-type instance Sqrt a = a ^^ (1%2)
--}
-
 -- Type-safe unit calculations
 
 -- | Add two numbers with units. The units have to align for this to work.
 
 addU :: Num a => a :@ u -> a :@ u -> a :@ u
-addU (U a m) (U b n) = U (a+b) (m <|> n)
+addU (U a) (U b) = U (a+b)
 
 -- | Subtract two numbers with units. As with addition, the units have to
 --   be identical.
 
 subU :: Num a => a :@ u -> a :@ u -> a :@ u
-subU (U a m) (U b n) = U (a-b) (m <|> n)
+subU (U a) (U b) = U (a-b)
 
 -- | Multiply two numbers with units, multiplying their units in the process.
 
 mulU :: Num a => a :@ u -> a :@ v -> a :@ u*v
-mulU (U a m) (U b n) = U (a*b) (liftM2 (*) m n)
+mulU (U a) (U b) = U (a*b)
 
 -- | Divide two fractionals with units, dividing their units in the process.
 
 divU :: Fractional a => a :@ u -> a :@ v -> a :@ u/v
-divU (U a m) (U b n) = U (a/b) (liftM2 (/) m n)
+divU (U a) (U b) = U (a/b)
 
--- | Project any number into a dimensionless quantity
+-- | Project any value into a dimensionless quantity
 
-lit :: Num a => a -> a :@ One
-lit n = U n (Just 1)
+lit :: a -> a :@ One
+lit = U
 
 -- | Untag a dimensionless quantity
 
 unTag :: a :@ One -> a
-unTag (U a _) = a
+unTag (U a) = a
 
-{-
 -- Type-unsafe unit calculations
 
 -- | Coerce the units while leaving the value unchanged
 
 coerceUnit :: a:@u -> a:@v
-coerceUnit (U a _) = U a Nothing
--}
+coerceUnit (U a) = U a

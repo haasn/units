@@ -68,29 +68,6 @@ promote [d|
   negInt (Norm (NS a)) = Neg a
   negInt (Neg   a    ) = Norm (NS a)
 
-  absInt :: Int -> Int
-  absInt (Norm x) = Norm x
-  absInt (Neg  x) = Norm (NS x)
-
-  signumInt :: Int -> Int
-  signumInt (Norm  N0   ) = i0
-  signumInt (Norm (NS _)) = i1
-  signumInt (Neg   _    ) = im1
-
-  cmpInt :: Int -> Int -> Ordering
-  cmpInt (Norm a) (Norm b) = cmpNat a b
-  cmpInt (Neg  a) (Neg  b) = cmpNat b a
-  cmpInt (Norm _) (Neg  _) = GT
-  cmpInt (Neg  _) (Norm _) = LT
-
-  lessThan :: Int -> Int -> Bool
-  lessThan a b = lT' (cmpInt a b)
-
-  lT' :: Ordering -> Bool
-  lT' LT = True
-  lT' EQ = False
-  lT' GT = False
-
   i0, i1, i2, i3, i4, i5, i6, i7, i8, i9 :: Int
   i0 = Norm N0; i1 = Norm n1; i2 = Norm n2; i3 = Norm n3; i4 = Norm n4
   i5 = Norm n5; i6 = Norm n6; i7 = Norm n7; i8 = Norm n8; i9 = Norm n9
@@ -98,99 +75,10 @@ promote [d|
   im1, im2, im3, im4, im5 :: Int
   im1 = Neg N0; im2 = Neg n1; im3 = Neg n2; im4 = Neg n3; im5 = Neg n4
 
-  -- Rational numbers, as pairs of ints a/b
-
-  {-
-  data Rational = Int :/ Int deriving Eq
-
-  mkRatio :: Int -> Int -> Rational
-  mkRatio x y = reduce (mulInt x (signumInt y)) (absInt y)
-
-  reduce :: Int -> Int -> Rational
-  reduce x y = reduce' x y (gcdInt x y)
-
-  reduce' :: Int -> Int -> Int -> Rational
-  reduce' x y g = (x `quotInt` g) :/ (y `quotInt` g)
-
-  gcdInt :: Int -> Int -> Int
-  gcdInt x y = gcdInt' (absInt x) (absInt y)
-
-  gcdInt' :: Int -> Int -> Int
-  gcdInt' a (Norm  N0   ) = a
-  gcdInt' a (Norm (NS b)) = gcdInt' (Norm (NS b)) (a `remInt` Norm (NS b))
-  gcdInt' a (Neg   b    ) = gcdInt' (Neg b) (a `remInt` Neg b)
-
-  quotInt :: Int -> Int -> Int
-  quotInt x y = fst' (quotRemInt x y)
-
-  remInt :: Int -> Int -> Int
-  remInt x y = snd' (quotRemInt x y)
-
-  fst' :: (a, b) -> a
-  fst' (a, _) = a
-
-  snd' :: (a, b) -> b
-  snd' (_, b) = b
-
-  quotRemInt :: Int -> Int -> (Int, Int)
-  quotRemInt a b = mulBoth (mulInt (signumInt a) (signumInt b)) (signumInt a)
-                           (qRI' (absInt a) (absInt b) (absInt a) (absInt b))
-
-  qRI' :: Int -> Int -> Int -> Int -> (Int, Int)
-  -- a < b
-  qRI' (Neg  _    ) (Norm (NS _)) a _ = (i0, a)
-  qRI' (Norm N0   ) (Norm (NS _)) a _ = (i0, a)
-  qRI' (Neg (NS _)) (Neg   N0   ) a _ = (i0, a)
-
-  -- a >= b
-  qRI' (Norm _    ) (Neg   _    ) a b = qRI'' b (qRI''' a (mulInt i2 b))
-  qRI' (Norm _    ) (Norm  N0   ) a b = qRI'' b (qRI''' a (mulInt i2 b))
-  qRI' (Neg  N0   ) (Neg   _    ) a b = qRI'' b (qRI''' a (mulInt i2 b))
-
-  -- a ? b
-  qRI' (Norm (NS a')) (Norm (NS b')) a b = qRI' (Norm a') (Norm b') a b
-  qRI' (Neg  (NS a')) (Neg  (NS b')) a b = qRI' (Neg  a') (Neg  b') a b
-
-  qRI'' :: Int -> (Int, Int) -> (Int, Int)
-  qRI'' b (q', r') = if not (r' `lessThan` b)
-                       then ( addInt i1 (mulInt i2 q')
-                            , addInt r' (negInt b))
-                       else (mulInt i2 q', r')
-
-  qRI''' :: Int -> Int -> (Int, Int)
-  qRI''' a b = qRI' a b a b
-
-  mulBoth :: Int -> Int -> (Int, Int) -> (Int, Int)
-  mulBoth a b (x, y) = (mulInt a x, mulInt b y)
-
-  addRat :: Rational -> Rational -> Rational
-  addRat (x :/ y) (x' :/ y') = reduce (addInt (mulInt x y') (mulInt x' y))
-                                      (mulInt y y')
-
-  mulRat :: Rational -> Rational -> Rational
-  mulRat (x :/ y) (x' :/ y') = reduce (mulInt x x') (mulInt y y')
-
-  negRat :: Rational -> Rational
-  negRat (x :/ y) = negInt x :/ y
-
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9 :: Rational
-  r0 = i0:/i1; r1 = i1:/i1; r2 = i2:/i1; r3 = i3:/i1; r4 = i4:/i1; r5 = i5:/i1
-  r6 = i6:/i1; r7 = i7:/i1; r8 = i8:/i1; r9 = i9:/i1
-
-  rm1, rm2, rm3, rm4, rm5 :: Rational
-  rm1 = im1:/i1; rm2 = im2:/i1; rm3 = im3:/i1; rm4 = im4:/i1; rm5 = im5:/i1
-  -}
-
   -- Pretty association lists for units
 
   data Assoc = [TChar] :^ Int deriving Eq
   data Unit = EL [Assoc]
-
-  key :: Assoc -> [TChar]
-  key (s:^_) = s
-
-  val :: Assoc -> Int
-  val (_:^e) = e
 
   -- Type-level ‘characters’
 
@@ -204,15 +92,11 @@ promote [d|
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
 
-data a :@ (u :: Unit) = U
-  { value  :: a
-  , factor_old :: Maybe a -- u / Base u
-  }
-
+data a :@ (u :: Unit) = U a
 infix 5 :@
 
 instance Show a => Show (a :@ u) where
-  show (U x _) = show x
+  show (U x) = show x
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators
