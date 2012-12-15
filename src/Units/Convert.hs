@@ -1,37 +1,14 @@
 {-# LANGUAGE ConstraintKinds, TypeFamilies, TypeOperators, DataKinds
   , FlexibleInstances, TemplateHaskell, TypeSynonymInstances, PolyKinds
   , UndecidableInstances, ScopedTypeVariables, NoMonomorphismRestriction #-}
--- | Attempt at a class-based unit conversion system. Current limitations
---   are:
---
---   * Even fully applied type synonym families can't be made into instances,
---     so you have to expand the units to their underlying representation
---     manually.
---
---   * Type synonym families aren't reversible (Haskell isn't a constraint
---     solver), so compound units can't be converted - they have to be taken
---     apart and converted on an ad-hod basis.
---
---   The way the class works, to prevent exponential instance numbers like
---   MPTC-based approaches need, is by converting to and from a common ‘base’
---   unit that is used as common denominator between the two. In addition to
---   the class, this module exports a bunch of arbitrarily chosen base units,
---   defined as the SI units, as well as constraints for asserting something
---   to be isomorphic to them.
 
 module Units.Convert where
 
 import Prelude hiding (Int)
-
 import Data.Singletons
 
-import Units.Internal.Types
-import GHC.Exts (Constraint)
-
-import Language.Haskell.TH
-import Language.Haskell.TH.Quote
-
 import Units
+import Units.Internal.Types
 
 -- We need a kind-polymorphic version
 data Proxy k = Proxy

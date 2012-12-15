@@ -22,7 +22,9 @@ makeCompare (a, i) (b, j) = TySynInstD ''Compare [PromotedT a, PromotedT b] res
 
 -- List comparison
 
-type instance Compare '[] '[] = EQ
+type instance Compare '[]       '[]       = EQ
+type instance Compare '[]       (b ': bs) = LT
+type instance Compare (a ': as) '[]       = GT
 type instance Compare (a ': as) (b ': bs) = CmpList (Compare a b) as bs
 
 type family CmpList (o :: Ordering) (a :: [k]) (b :: [k]) :: Ordering

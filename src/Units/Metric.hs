@@ -7,8 +7,8 @@ module Units.Metric
   , module Units.SI
   ) where
 
-import Units.Prelude
-import Units.Convert
+import Units
+import Units.TH
 import Units.SI
 
 -- Some widely used non-SI units
@@ -33,10 +33,11 @@ makeUnits [ ''Are, ''Hectare, ''Liter, ''Litre, ''Gram, ''Tonne ]
 
 -- Experimentally determined units
 
-type ElectronVolt   = [u|eV|]    -- ^ Unit of energy, symbol ‘eV’
+type ElectronVolt   = ElectronCharge * Volt -- ^ Unit of energy, symbol ‘eV’
+
 type AtomicMass     = [u|u |]    -- ^ Unit of mass, symbol ‘u’
 type Dalton         = AtomicMass -- ^ Alternative name for 'AtomicMass'
-type AstroUnit      = [u|ua|]    -- ^ Unit of length, symbol ‘ua’
+type AstroUnit      = [u|au|]    -- ^ Unit of length, symbol ‘au’
 type ElectronCharge = [u|e |]    -- ^ Unit of charge, symbol ‘e’
 
 makeUnits [ ''ElectronVolt, ''AtomicMass, ''Dalton, ''AstroUnit
@@ -50,24 +51,15 @@ type Atmosphere = [u|atm|]        -- ^ Unit of pressure, symbol ‘atm’
 
 makeUnits [ ''Bar, ''Millibar, ''Atmosphere ]
 
--- For testing
-type Meter'  = [ts|m|]
-type Deca'   = [ts|deca|]
-type Second' = [ts|s|]
-type Hour'   = [ts|h|]
+-- Conversion rules for base units
 
-instance IsoDim Meter' where
-  type From Meter' = Meter'
-  factor _ = 1
-
-instance IsoDim Deca' where
-  type From Deca' = '[]
-  factor _ = 10
-
-instance IsoDim Second' where
-  type From Second' = Second'
-  factor _ = 1
-
-instance IsoDim Hour' where
-  type From Hour' = Second'
-  factor _ = 3600
+makeConvert ''Minute         ''Second   60
+makeConvert ''Hour           ''Second   (60*60)
+makeConvert ''Day            ''Second   (24*60*60)
+makeConvert ''Degree         ''One      (1/360)
+makeConvert ''ArcMinute      ''One      (1/(360*60))
+makeConvert ''ArcSecond      ''One      (1/(360*60*60))
+makeConvert ''AtomicMass     ''Kilogram 1.66053892173e-27
+makeConvert ''AstroUnit      ''Meter    149597870700
+-- makeConvert ''ElectronCharge ''Coulomb  1.60217656535e-19
+-- makeConvert ''Atmosphere     ''Pascal   1.01325e5

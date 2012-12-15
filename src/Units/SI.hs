@@ -5,9 +5,9 @@
 --   numeric prefixes.
 module Units.SI where
 
-import Prelude hiding ((/),(*),(+),(-))
-import Units.Prelude
-import Units.Convert
+import Prelude
+import Units
+import Units.TH
 
 -- SI base units
 
@@ -83,16 +83,21 @@ type Sievert    = [u|Sv |] -- ^ Unit of equivalent dosem symbol ‘Sv’
 
 makeUnits [ ''Mole, ''Radian, ''Steradian, ''Celsius, ''Becquerell, ''Sievert ]
 
-{-
-instance IsoUnit Mole where
-  type Base Mole = One
-  type Ctx  Mole = Fractional
-  toBase   v = v * (6.0221417930e23/mole)
-  fromBase v = v / (6.0221417930e23/mole)
--}
-
 type Lumen = Candela * Steradian -- ^ Unit of luminous flux = cd·sr
 type Lux   = Lumen / Meter^2     -- ^ Unit of illuminance = lm/m²
 type Katal = Mole / Second       -- ^ Unit of catalytic activity = mol/s
 
 makeUnits [ ''Lumen, ''Lux, ''Katal ]
+
+-- Conversions on all base units
+
+makeConvert ''Meter     ''Meter    1
+makeConvert ''Kilogram  ''Kilogram 1
+makeConvert ''Second    ''Second   1
+makeConvert ''Ampere    ''Ampere   1
+makeConvert ''Kelvin    ''Kelvin   1
+makeConvert ''Candela   ''Candela  1
+makeConvert ''Deca      ''One      10
+makeConvert ''Mole      ''One      6.0221417930e23
+makeConvert ''Radian    ''One      (1/(2*pi))
+makeConvert ''Steradian ''One      (1/(4*pi))

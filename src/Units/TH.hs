@@ -1,30 +1,22 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
 -- | TemplateHaskell functions for introducing new units.
-module Units.TH (ts, u, makeUnit, makeUnits) where
+module Units.TH (u, makeUnit, makeUnits, makeConvert) where
 
 import Prelude hiding (div, exp, Rational, Int)
 
-import Control.Applicative hiding ((<|>))
-
 import Data.Char (toLower)
-import qualified Data.Map   as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, catMaybes)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
 
+import Units.Convert
 import Units.Internal.Types
-
-import Text.Parsec
-import Text.Parsec.Expr
-import Text.Parsec.Language (haskell)
-import Text.Parsec.String
-import Text.Parsec.Token (parens, natural)
 
 -- Quasiquoter for TString
 
-toTChar :: Char -> Name
-toTChar = \case
+toTChar' :: Char -> Name
+toTChar' = \case
   'A'->'CA; 'B'->'CB; 'C'->'CC; 'D'->'CD; 'E'->'CE; 'F'->'CF; 'G'->'CG;
   'H'->'CH; 'I'->'CI; 'J'->'CJ; 'K'->'CK; 'L'->'CL; 'M'->'CM; 'N'->'CN;
   'O'->'CO; 'P'->'CP; 'Q'->'CQ; 'R'->'CR; 'S'->'CS; 'T'->'CT; 'U'->'CU;
@@ -36,109 +28,25 @@ toTChar = \case
 
   c -> error $ "Unsupported char in TChar literal: " ++ show c
 
+toTChar :: Char -> Maybe Name
+toTChar c | c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' = Just (toTChar' c)
+          | otherwise = Nothing
+
+toTString :: String -> Type
+toTString = promotedListT . map PromotedT . catMaybes . map toTChar
+
 promotedListT :: [Type] -> Type
 promotedListT  []    = PromotedNilT
 promotedListT (x:xs) = AppT (AppT PromotedConsT x) (promotedListT xs)
 
--- No longer needed here, but perhaps it may come in handy sometime else
-ts :: QuasiQuoter
-ts = QuasiQuoter
-  (return . ListE . map (ConE . toTChar))
-  (return . ListP . map ((`ConP` []) . toTChar))
-  (return . promotedListT . map (PromotedT . toTChar))
-  undefined
-
 -- Parser and quasiquoters for Unit
 
-data UnitExp = Unit String Integer | Mult UnitExp UnitExp | Recip UnitExp
-
-parseUnit :: String -> Maybe UnitExp
-parseUnit = either (error . show) id . parse (spaces *> p) "Unit QuasiQuoter"
-  where p = optionMaybe unit
-
-unit, name, prim :: Parser UnitExp
-unit = buildExpressionParser ops prim
- where
-  ops  = [[Infix mult AssocLeft, Infix div AssocLeft]]
-  mult =  Mult                  <$ char '*' <* spaces
-  div  = (\x -> Mult x . Recip) <$ char '/' <* spaces
-
-prim = name <|> parens haskell unit
-name = Unit <$> many1 letter <* spaces <*> option 1 exp
- where
-  exp  = char '^' *> spaces *> integer <* spaces
-     <|> choice (zipWith (\n o -> n <$ char o) [0..] nums) <* spaces
-
-  nums = ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
-
-integer :: Parser Integer
-integer = neg $ natural haskell
- where
-  neg :: Num a => Parser a -> Parser a
-  neg p = negate <$ char '-' <*> p <|> p
-
-{-
-rational :: Parser R.Rational
-rational = neg $ either fromInteger toRational <$> naturalOrFloat haskell
- where
-  neg :: Num a => Parser a -> Parser a
-  neg p = negate <$ char '-' <*> p <|> p
--}
-
-flatten :: UnitExp -> M.Map String Integer
-flatten (Unit s r) = M.singleton s r
-flatten (Mult a b) = M.unionWith (+) (flatten a) (flatten b)
-flatten (Recip  m) = M.map negate (flatten m)
-
--- Type generation for units
-
-toUnit :: M.Map String Integer -> Type
-toUnit = promotedListT . map toAssoc . filter ((/=0) . snd) . M.toList
-
-toAssoc :: (String, Integer) -> Type
-toAssoc (s, r) = AppT (AppT (PromotedT '(:^)) (toTString s)) (toInt r)
-
-toTString :: String -> Type
-toTString = promotedListT . map (PromotedT . toTChar)
-
-{-
-toRat :: R.Rational -> Type
-toRat r = AppT (AppT (PromotedT '(:/)) (toInt a)) (toInt b)
-  where (a, b) = (R.numerator r, R.denominator r)
--}
-
-toInt :: Integer -> Type
-toInt n
-  | n < 0     = AppT (PromotedT 'Neg ) (toNat (abs n - 1))
-  | otherwise = AppT (PromotedT 'Norm) (toNat n)
-
-toNat :: Integer -> Type
-toNat 0 = PromotedT 'N0
-toNat n = AppT (PromotedT 'NS) (toNat (n-1))
-
 quoteUnitT :: String -> Q Type
-quoteUnitT = return . p . toUnit . l . fmap flatten . parseUnit
- where
-  p = AppT (PromotedT 'EL)
-  l = fromMaybe (M.empty)
+quoteUnitT s = return $ AppT (PromotedT 'EL)
+                (promotedListT [AppT (AppT (PromotedT '(:^)) ts) (ConT ''I1)])
+  where ts = toTString s
 
-quoteUnitE :: String -> Q Exp
-quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
-
--- | A QuasiQuoter for units, with the following syntax:
---
---   * A unit itself is a nonempty string of upper case or lower case
---     letters, like ‘kg’ or ‘J’.
---
---   * Units may be combined with *, /, or exponentiated to a rational
---     exponent with ^. The exponent follows the syntactical rules of numeric
---     literals in Haskell, eg. ‘m^2’ or ‘s^0.5’.
---
---   * Alternatively, units can be exponentiated with ‘²’, ‘³’ etc.
---
---   * Units may be surrounded by parentheses, eg. ‘a/(b*c)’
---
---   Most of the time, you'd just want to use a name alone, eg.
+-- | A QuasiQuoter for units. Only alphanumeric characters are used.
 --
 --   > type Meter = [u|m|]
 --
@@ -150,7 +58,7 @@ quoteUnitE s = [| U 1 :: Num a => a :@ $(quoteUnitT s) |]
 --   ‘Foo’ and ‘Bar’ refer to the same unit, that is, Foo ~ Bar
 
 u :: QuasiQuoter
-u = QuasiQuoter quoteUnitE undefined quoteUnitT undefined
+u = QuasiQuoter undefined undefined quoteUnitT undefined
 
 -- Demote a unit to the value level
 
@@ -181,3 +89,27 @@ makeUnit n = do
 
 makeUnits :: [Name] -> Q [Dec]
 makeUnits = fmap concat . mapM makeUnit
+
+-- | Generate an isomorphism to some base unit
+
+makeConvert :: Real a => Name -> Name -> a -> Q [Dec]
+makeConvert un bn f = do
+  TyConI (TySynD _ [] ut) <- reify un
+  TyConI (TySynD _ [] bt) <- reify bn
+
+  let ud = fromMaybe (error "Units.TH.makeConvert: `One' illegal") (getDim ut)
+      bd = fromMaybe (PromotedNilT) (getDim bt)
+
+  return [ InstanceD [] (AppT (ConT ''IsoDim) ud)
+    [ TySynInstD ''From [ud] bd
+    , FunD 'factor [Clause [WildP]
+        (NormalB (LitE (RationalL (toRational f)))) []]
+    ]]
+
+getDim :: Type -> Maybe Type
+getDim (AppT (ConT el) (AppT (AppT PromotedConsT
+  (AppT (AppT (ConT (^)) n) (ConT i1))) PromotedNilT)) = Just n
+
+getDim (AppT (ConT el) PromotedNilT) = Nothing
+
+getDim t = error $ "Units.TH.getDim: Not a valid (base) unit: " ++ show t

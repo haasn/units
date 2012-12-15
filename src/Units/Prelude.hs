@@ -14,14 +14,18 @@
 module Units.Prelude
   ( module Units
   , module Units.TH
+
   , (Units.Prelude.+)
   , (Units.Prelude.-)
   , (Units.Prelude.*)
   , (Units.Prelude./)
+
+  , Convert, convert
   ) where
 
 import Units
 import Units.TH
+import Units.Convert
 
 (+) :: Num a => a :@ u -> a :@ u -> a :@ u
 (+) = addU
