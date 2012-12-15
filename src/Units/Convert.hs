@@ -41,14 +41,14 @@ type instance Merge ((u:^e)':(v:^d)':us) =
     ((u :^ e) ': (v :^ d) ': Merge us)
 
 -- Internal class for multiplying factors
-class Factor (u :: Unit) where
+class Linear (u :: Unit) where
   getFactor :: Fractional a => p u -> a
 
-instance Factor (EL '[]) where
+instance Linear (EL '[]) where
   getFactor _ = 1
 
-instance (Factor (EL xs), GetInt e, IsoDim u)
-         => Factor (EL ((u :^ e) ': xs)) where
+instance (Linear (EL xs), GetInt e, IsoDim u)
+         => Linear (EL ((u :^ e) ': xs)) where
   getFactor _ = factor (Proxy :: Proxy u) ^^ getInt (Proxy :: Proxy e)
                 * getFactor (Proxy :: Proxy (EL xs))
 
@@ -74,7 +74,7 @@ instance GetNat n => GetNat (NS n) where
 
 -- Convert between applicable units
 
-type Convert u v = (Factor u, Factor v, Base u ~ Base v)
+type Convert u v = (Linear u, Linear v, Base u ~ Base v)
 
 convert :: forall a u v. (Fractional a, Convert u v) => a :@ u -> a :@ v
 convert (U n) = U (n * f1 / f2)
