@@ -5,7 +5,6 @@ import Prelude hiding ((+), (-), (*), (/))
 import Units
 import Units.Prelude
 import Units.Metric
-import Units.Planck
 
 -- Tests
 
@@ -45,8 +44,10 @@ testkmh = ()
 
 -- Some testing of the sqrt stuff
 
+{-
 testplanck :: Volume ~ (Sqrt ((HBar*G)^3 / C^9)) => ()
 testplanck = ()
+-}
 
 -- If this thing compiles, all of our tests have succeeded
 

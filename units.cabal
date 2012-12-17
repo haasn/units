@@ -34,9 +34,7 @@ library
   build-depends:       base == 4.6.*,
                        singletons == 0.8.*,
                        containers == 0.5.*,
-                       tagged,
-                       template-haskell == 2.8.*,
-                       parsec == 3.1.*
+                       template-haskell == 2.8.*
 
   ghc-options:
                        -Wall
