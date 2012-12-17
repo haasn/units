@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell, QuasiQuotes, DataKinds, TypeOperators
-  , TypeSynonymInstances, FlexibleInstances, TypeFamilies #-}
+  , TypeSynonymInstances, FlexibleInstances, TypeFamilies
+  , UndecidableInstances #-}
 -- | Units in the metric system (which includes the SI system) as well as
 --   some other commonly used units which are not officially sanctioned.
 module Units.Metric
@@ -61,5 +62,5 @@ makeConvert ''ArcMinute      ''One      (1/(360*60))
 makeConvert ''ArcSecond      ''One      (1/(360*60*60))
 makeConvert ''AtomicMass     ''Kilogram 1.66053892173e-27
 makeConvert ''AstroUnit      ''Meter    149597870700
--- makeConvert ''ElectronCharge ''Coulomb  1.60217656535e-19
--- makeConvert ''Atmosphere     ''Pascal   1.01325e5
+makeConvert ''ElectronCharge ''Coulomb  1.60217656535e-19
+makeConvert ''Atmosphere     ''Pascal   1.01325e5

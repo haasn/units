@@ -95,21 +95,16 @@ makeUnits = fmap concat . mapM makeUnit
 makeConvert :: Real a => Name -> Name -> a -> Q [Dec]
 makeConvert un bn f = do
   TyConI (TySynD _ [] ut) <- reify un
-  TyConI (TySynD _ [] bt) <- reify bn
-
-  let ud = fromMaybe (error "Units.TH.makeConvert: `One' illegal") (getDim ut)
-      bd = fromMaybe (PromotedNilT) (getDim bt)
+  let ud = getDim ut
 
   return [ InstanceD [] (AppT (ConT ''IsoDim) ud)
-    [ TySynInstD ''From [ud] bd
+    [ TySynInstD ''From [ud] (ConT bn)
     , FunD 'factor [Clause [WildP]
         (NormalB (LitE (RationalL (toRational f)))) []]
     ]]
 
-getDim :: Type -> Maybe Type
+getDim :: Type -> Type
 getDim (AppT (ConT el) (AppT (AppT PromotedConsT
-  (AppT (AppT (ConT (^)) n) (ConT i1))) PromotedNilT)) = Just n
-
-getDim (AppT (ConT el) PromotedNilT) = Nothing
+  (AppT (AppT (ConT (^)) n) (ConT i1))) PromotedNilT)) = n
 
 getDim t = error $ "Units.TH.getDim: Not a valid (base) unit: " ++ show t

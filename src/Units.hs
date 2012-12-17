@@ -5,7 +5,7 @@ module Units
   ( (:@)(), One
 
   -- ** Type functions for combining units
-  , (*)(), (/)(), (^)() --, (^^)(), (%)(), Sqrt
+  , (*)(), (/)(), (^)(), (^^)()
 
   -- * Type-safe calculations with units
   , addU, subU, mulU, divU
@@ -13,9 +13,6 @@ module Units
 
   -- * Type-unsafe functions
   , coerceUnit
-
-  -- Exported for internal purposes
-  , Cleanup, Sort, Normalize
   ) where
 
 import Prelude hiding (Int, div)
@@ -112,8 +109,13 @@ infixl 7 /
 --   > a ^ 1 ~ a
 
 type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
-type instance a^b = PowUnit a (IntLit b)
+type instance a^b = a ^^ IntLit b
 infixr 8 ^
+
+-- | Exponentiate a unit to a Units.Int you have lying around.
+
+type family (a :: Unit) ^^ (b :: Int) :: Unit
+type instance a^^b = PowUnit a b
 
 -- Type-safe unit calculations
 

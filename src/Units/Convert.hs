@@ -13,32 +13,13 @@ import Units.Internal.Types
 data Proxy k = Proxy
 
 class IsoDim (u :: [TChar]) where
-  type From u :: [TChar]
+  type From u :: Unit
 
   factor :: Fractional a => p u -> a -- From u / u
 
 type family Base (u :: Unit) :: Unit
-type instance Base (EL u) = EL (Cleanup (Merge (Sort (Strip (Base' u)))))
-
--- Take each primitive unit to its base form
-type family Base' (u :: [Assoc]) :: [Assoc]
-type instance Base' '[]          = '[]
-type instance Base' ((u:^e)':us) = (From u :^ e) ': Base' us
-
--- Get rid of units with a dimensionless (empty) base
-type family Strip (u :: [Assoc]) :: [Assoc]
-type instance Strip '[] = '[]
-type instance Strip (('[]      :^ e) ': us) = Strip us
-type instance Strip (((n ':ns) :^ e) ': us) = ((n ':ns) :^ e) ': Strip us
-
--- Merge two adjacent units with the same base
-type family Merge (u :: [Assoc]) :: [Assoc]
-type instance Merge  '[ ]                = '[ ]
-type instance Merge  '[x]                = '[x]
-type instance Merge ((u:^e)':(v:^d)':us) =
-  If (u :== v)
-    ((u :^ AddInt e d)    ': Merge us)
-    ((u :^ e) ': (v :^ d) ': Merge us)
+type instance Base (EL  '[]        ) = One
+type instance Base (EL ((u:^e)':us)) = From u ^^ e * Base (EL us)
 
 -- Internal class for multiplying factors
 class Linear (u :: Unit) where
