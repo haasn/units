@@ -5,7 +5,7 @@ module Units.TH (u, makeUnit, makeUnits, makeConvert) where
 import Prelude hiding (div, exp, Rational, Int)
 
 import Data.Char (toLower)
-import Data.Maybe (fromMaybe, catMaybes)
+import Data.Maybe (catMaybes)
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote

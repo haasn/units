@@ -1,5 +1,6 @@
 {-# LANGUAGE KindSignatures, DataKinds, TemplateHaskell, TypeFamilies
-  , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes #-}
+  , UndecidableInstances, TypeOperators, PolyKinds, QuasiQuotes, RankNTypes
+  , FlexibleContexts, GADTs #-}
 module Units
   -- * Types
   ( (:@)(), One
@@ -23,7 +24,7 @@ import Units.Internal.Types
 
 import qualified GHC.TypeLits as GHC (Nat)
 
-promote [d|
+singletons [d|
   -- Lookup
 
   extract :: [TChar] -> [Assoc] -> (Maybe Int, [Assoc])

@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds, TemplateHaskell, TypeFamilies, TypeOperators
-  , UndecidableInstances, PolyKinds #-}
+  , UndecidableInstances, PolyKinds, GADTs, RankNTypes #-}
 module Units.Internal.Types where
 
 import Prelude hiding (Int)
@@ -8,7 +8,9 @@ import Units.Internal.TypeOrd
 
 import qualified GHC.TypeLits as GHC (Nat)
 
-promote [d|
+genSingletons [''Ordering]
+
+singletons [d|
   -- Peano ℕ⁺
 
   data Nat = N0 | NS Nat deriving Eq
@@ -123,6 +125,9 @@ type instance Compare (a :^ e) (b :^ f) = Compare a b
 
 sort :: [Assoc] -> [Assoc]
 sort = undefined -- Just get this here for the promotion
+
+sSort :: Sing t -> Sing (Sort t)
+sSort = undefined
 
 type family Sort (xs :: [k]) :: [k]
 
