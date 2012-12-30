@@ -4,13 +4,13 @@
 module Units.Convert where
 
 import Prelude hiding (Int)
-import Data.Singletons
 import GHC.Exts (Constraint)
+import GHC.TypeLits hiding ((*)(), Nat)
 
 import Units
 import Units.Internal.Types
 
--- We need a kind-polymorphic version
+-- Kind-polymorphic proxy
 data Proxy k = Proxy
 
 class IsoDim (u :: [TChar]) where
@@ -19,31 +19,53 @@ class IsoDim (u :: [TChar]) where
   factor :: Fractional a => p u -> a -- From u / u
 
 type family Base (u :: Unit) :: Unit
-type instance Base (EL  '[]        ) = One
-type instance Base (EL ((u:^e)':us)) = From u ^^ e * Base (EL us)
+type instance where
+  Base (EL  '[]        ) = One
+  Base (EL ((u:^e)':us)) = From u ^^ e * Base (EL us)
 
-type family Linear (u :: Unit) :: Constraint
-type instance Linear (EL '[])              = ()
-type instance Linear (EL ((u :^ e) ': xs)) = (Linear (EL xs), IsoDim u)
+type family HasFactor (u :: Unit) :: Constraint
+type instance where
+  HasFactor (EL '[])              = ()
+  HasFactor (EL ((u :^ e) ': xs)) = (HasFactor (EL xs), IsoDim u)
 
 -- Convert between applicable units
 
-type Convert u v = (Linear u, SingI u, Linear v, SingI v, Base u ~ Base v)
+type Convert u v = (Linear u, Linear v, Base u ~ Base v)
 
 convert :: forall a u v. (Fractional a, Convert u v) => a :@ u -> a :@ v
 convert (U n) = U (n * f1 / f2)
-  where f1 = getFactor (sing :: Sing u)
-        f2 = getFactor (sing :: Sing v)
+  where f1 = getFactor (Proxy :: Proxy u)
+        f2 = getFactor (Proxy :: Proxy v)
 
-getFactor :: (Fractional a, Linear u) => Sing u -> a
-getFactor (SEL SNil) = 1
-getFactor (SEL (SCons (u :%^ e) xs)) =
-  factor u ^^ fromInt (fromSing e) * getFactor (SEL xs)
+-- Reflection classes, less overhead than constructing Sing instances
 
-fromInt :: Int -> Integer
-fromInt (Norm n) = fromNat n
-fromInt (Neg  n) = (-1) - fromNat n
+class ReflNat (n :: Nat) where
+  reflNat :: p n -> Integer
 
-fromNat :: Nat -> Integer
-fromNat N0     = 0
-fromNat (NS n) = 1 + fromNat n
+instance ReflNat N0 where
+  reflNat _ = 0
+
+instance ReflNat n => ReflNat (NS n) where
+  reflNat _ = 1 + reflNat (Proxy :: Proxy n)
+
+
+class ReflInt (n :: Int) where
+  reflInt :: p n -> Integer
+
+instance ReflNat n => ReflInt (Norm n) where
+  reflInt _ = reflNat (Proxy :: Proxy n)
+
+instance ReflNat n => ReflInt (Neg n) where
+  reflInt _ = (-1) - reflNat (Proxy :: Proxy n)
+
+
+class HasFactor u => Linear (u :: Unit) where
+  getFactor :: Fractional a => p u -> a
+
+instance Linear (EL '[]) where
+  getFactor _ = 1
+
+instance (ReflInt e, IsoDim x, Linear (EL xs))
+          => Linear (EL ((x :^ e) ': xs)) where
+  getFactor _ = factor (Proxy :: Proxy x) ^^ reflInt (Proxy :: Proxy e)
+                  * getFactor (Proxy :: Proxy (EL xs))

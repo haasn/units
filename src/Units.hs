@@ -16,73 +16,67 @@ module Units
   , coerceUnit
   ) where
 
-import Prelude hiding (Int, div)
-import Data.Singletons
+import Prelude hiding (Int)
 
+import Units.Internal.TypeOrd (Compare)
 import Units.Internal.Types
---import Units.TH
 
 import qualified GHC.TypeLits as GHC (Nat)
 
-singletons [d|
-  -- Lookup
+-- Merging by adding. Units are pre-sorted, so this preserves invariants
 
-  extract :: [TChar] -> [Assoc] -> (Maybe Int, [Assoc])
-  extract _  [] = (Nothing, [])
-  extract s ((s':^e):xs) =
-    if s == s'
-      then (Just e, xs)
-      else consSnd (s':^e) (extract s xs)
+type family InsertAdd (x :: Assoc) (xs :: [Assoc]) :: [Assoc]
+type instance where
+  InsertAdd  x       '[]              = '[x]
+  InsertAdd (x :^ e) ((y :^ f) ': ys) =
+    InsertAdd' (Compare x y) (x :^ e) (y :^ f) ys
 
-  consSnd :: x -> (b, [x]) -> (b, [x])
-  consSnd x (b, xs) = (b, x:xs)
+type family InsertAdd' (o :: Ordering) (x :: Assoc) (y :: Assoc)(ys :: [Assoc]) :: [Assoc]
+type instance where
+  InsertAdd' LT x y ys = x ': y ': ys
+  InsertAdd' GT x y ys = y ': InsertAdd x ys
+  InsertAdd' EQ (x :^ Norm (NS e)) (y :^ Neg e) ys = ys -- Delete 0s
+  InsertAdd' EQ (x :^ e) (y :^ f) ys = (x :^ (e+f)) ': ys
 
-  -- Insertion
+-- Common operators: Multiplication, Exponentiation, Division
 
-  insertAdd :: Assoc -> [Assoc] -> [Assoc]
-  insertAdd (s:^e) x = insertAdd' (s:^e) (extract s x)
+type instance where
+  EL xs * EL '[]       = EL xs
+  EL xs * EL (y ': ys) = EL (InsertAdd y xs) * EL ys
 
-  insertAdd' :: Assoc -> (Maybe Int, [Assoc]) -> [Assoc]
-  insertAdd' v (Nothing, x)      = v:x
-  insertAdd' (s:^e) (Just e', x) = (s :^ addInt e e') : x
+type family MapMul (f :: Int) (u :: [Assoc]) :: [Assoc]
+type instance where
+  MapMul f '[]              = '[]
+  MapMul f ((x :^ e) ': xs) = (x :^ (f*e)) ': MapMul f xs
 
-  -- Merging
+-- | Exponentiate a unit to a Units.Int you have lying around.
 
-  mergeAdd :: [Assoc] -> [Assoc] -> [Assoc]
-  mergeAdd  []   y = y
-  mergeAdd (v:x) y = insertAdd v (mergeAdd x y)
+type family (u :: Unit) ^^ (i :: Int) :: Unit
+type instance (EL xs) ^^ i = EL (MapMul i xs)
+infixr 8 ^^
 
-  multUnit :: Unit -> Unit -> Unit
-  multUnit (EL a) (EL b) = EL (normalize (mergeAdd a b))
+-- | Exponentiate a unit to a natural exponent. This only works with exponents
+--   from 0 to 9, due to limitations in GHC's Nat kind.
+--
+--   > a ^ 0 ~ One
+--   > a ^ 1 ~ a
 
-  -- Multiplication with constant factor
+type family (u :: Unit) ^ (n :: GHC.Nat) :: Unit
+type instance u ^ n = u ^^ IntLit n
+infixr 8 ^
 
-  mapMul :: Int -> [Assoc] -> [Assoc]
-  mapMul _  []        = []
-  mapMul r ((s:^e):x) = (s :^ mulInt r e) : mapMul r x
+type family Recip (u :: Unit) :: Unit
+type instance Recip xs = xs ^^ IM1
 
-  recip :: Unit -> Unit
-  recip (EL a) = EL (mapMul im1 a)
-
-  powUnit :: Unit -> Int -> Unit
-  powUnit (EL a) r = EL (mapMul r a)
-
-  -- Cleanup of 0s and sorting
-
-  cleanup :: [Assoc] -> [Assoc]
-  cleanup []         = []
-  cleanup ((s:^e):x) = if e == i0 then x else (s:^e) : cleanup x
-
-  normalize :: [Assoc] -> [Assoc]
-  normalize xs = sort (cleanup xs)
-
-  |]
+type instance where
+  xs / ys = xs * Recip ys
 
 -- | The dimensionless unit. This is the multiplicative identity of units.
 
 type One = EL '[]
 
--- Pretty operators for combining types
+{-
+Where to stick this documentation?
 
 -- | Multiply two units. This has commutative, associative and has 'One' as
 --   the identity:
@@ -92,31 +86,9 @@ type One = EL '[]
 --   > One * a ~ a
 --   > a * One ~ a
 
-type family (a :: Unit) * (b :: Unit) :: Unit
-type instance a*b = MultUnit a b
-infixl 7 *
-
 -- | Divide two units. This is equal to multiplying with the reciprocal of
 --   the right unit.
-
-type family (a :: Unit) / (b :: Unit) :: Unit
-type instance a/b = MultUnit a (Recip b)
-infixl 7 /
-
--- | Exponentiate a unit to a natural exponent. This only works with exponents
---   from 0 to 9, due to limitations in GHC's Nat kind.
---
---   > a ^ 0 ~ One
---   > a ^ 1 ~ a
-
-type family (a :: Unit) ^ (b :: GHC.Nat) :: Unit
-type instance a^b = a ^^ IntLit b
-infixr 8 ^
-
--- | Exponentiate a unit to a Units.Int you have lying around.
-
-type family (a :: Unit) ^^ (b :: Int) :: Unit
-type instance a^^b = PowUnit a b
+-}
 
 -- Type-safe unit calculations
 

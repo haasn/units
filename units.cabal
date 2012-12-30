@@ -11,7 +11,7 @@ stability:           Experimental
 category:            Units
 build-type:          Simple
 cabal-version:       >=1.8
-tested-with:         GHC == 7.6.1
+tested-with:         GHC == 7.7.20121228
 
 source-repository head
   type:                darcs
@@ -31,10 +31,9 @@ library
 
   hs-source-dirs:      src
 
-  build-depends:       base == 4.6.*,
-                       singletons == 0.8.*,
+  build-depends:       base == 4.7.*,
                        containers == 0.5.*,
-                       template-haskell == 2.8.*
+                       template-haskell == 2.9.*
 
   ghc-options:
                        -Wall
@@ -49,5 +48,5 @@ test-suite tests
   hs-source-dirs:      tests
   main-is:             Tests.hs
 
-  build-depends:       base == 4.6.*,
+  build-depends:       base == 4.7.*,
                        units

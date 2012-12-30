@@ -14,7 +14,8 @@ makeOrd n = do
   return $ liftM2 makeCompare cs cs
 
 makeCompare :: (Name, Int) -> (Name, Int) -> Dec
-makeCompare (a, i) (b, j) = TySynInstD ''Compare [PromotedT a, PromotedT b] res
+makeCompare (a, i) (b, j) = TySynInstD ''Compare
+                              [TySynEqn [PromotedT a, PromotedT b] res]
   where res = case compare i j of
           LT -> PromotedT 'LT
           EQ -> PromotedT 'EQ
@@ -22,12 +23,13 @@ makeCompare (a, i) (b, j) = TySynInstD ''Compare [PromotedT a, PromotedT b] res
 
 -- List comparison
 
-type instance Compare '[]       '[]       = EQ
-type instance Compare '[]       (b ': bs) = LT
-type instance Compare (a ': as) '[]       = GT
-type instance Compare (a ': as) (b ': bs) = CmpList (Compare a b) as bs
+type instance where
+  Compare '[]       '[]       = EQ
+  Compare '[]        b        = LT
+  Compare  a        '[]       = GT
+  Compare (a ': as) (b ': bs) = CmpList (Compare a b) as bs
 
 type family CmpList (o :: Ordering) (a :: [k]) (b :: [k]) :: Ordering
-type instance CmpList EQ a b = Compare a b
-type instance CmpList LT a b = LT
-type instance CmpList GT a b = GT
+type instance where
+  CmpList EQ a b = Compare a b
+  CmpList c  a b = c

@@ -98,7 +98,7 @@ makeConvert un bn f = do
   let ud = getDim ut
 
   return [ InstanceD [] (AppT (ConT ''IsoDim) ud)
-    [ TySynInstD ''From [ud] (ConT bn)
+    [ TySynInstD ''From [TySynEqn [ud] (ConT bn)]
     , FunD 'factor [Clause [WildP]
         (NormalB (LitE (RationalL (toRational f)))) []]
     ]]
