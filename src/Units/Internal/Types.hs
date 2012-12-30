@@ -64,6 +64,10 @@ type instance where
   Neg a + Norm b = Norm b + Neg a
 
 type family Negate (a :: Int) :: Int
+type instance where
+  Negate (Norm  N0   ) = Norm N0
+  Negate (Norm (NS a)) = Neg a
+  Negate (Neg   a    ) = Norm (NS a)
 
 type instance where
   a - b = a + Negate b
@@ -75,11 +79,6 @@ type instance where
 
   -- (-1-a) * (-1-b) = -(-1-a) - b(-1-a) = 1+a+b+ab
   Neg a * Neg b = Norm (NS (a + b + a*b))
-
-type instance where
-  Negate (Norm  N0   ) = Norm N0
-  Negate (Norm (NS a)) = Neg a
-  Negate (Neg   a    ) = Norm (NS a)
 
 type IM1 = Neg N0
 type I0  = Norm N0

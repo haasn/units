@@ -5,7 +5,6 @@ module Units.Convert where
 
 import Prelude hiding (Int)
 import GHC.Exts (Constraint)
-import GHC.TypeLits hiding ((*)(), Nat)
 
 import Units
 import Units.Internal.Types

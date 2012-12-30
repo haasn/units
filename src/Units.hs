@@ -36,6 +36,7 @@ type instance where
   InsertAdd' LT x y ys = x ': y ': ys
   InsertAdd' GT x y ys = y ': InsertAdd x ys
   InsertAdd' EQ (x :^ Norm (NS e)) (y :^ Neg e) ys = ys -- Delete 0s
+  InsertAdd' EQ (x :^ Neg e) (y :^ Norm (NS e)) ys = ys -- Delete 0s
   InsertAdd' EQ (x :^ e) (y :^ f) ys = (x :^ (e+f)) ': ys
 
 -- Common operators: Multiplication, Exponentiation, Division

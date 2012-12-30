@@ -5,9 +5,9 @@
 --   numeric prefixes.
 module Units.SI where
 
-import Prelude
 import Units
 import Units.TH
+import qualified Units.Prelude as U
 
 -- SI base units
 
@@ -82,6 +82,11 @@ type Becquerell = [u|Bq |] -- ^ Unit of radioacitivity, symbol ‘Bq’
 type Sievert    = [u|Sv |] -- ^ Unit of equivalent dosem symbol ‘Sv’
 
 makeUnits [ ''Mole, ''Radian, ''Steradian, ''Celsius, ''Becquerell, ''Sievert ]
+
+-- Conversions function from celsius to kelvin
+
+celsiusKelvin :: Fractional a => a :@ Celsius -> a :@ Kelvin
+celsiusKelvin x = (x U.- 273.15 U.* celsius) U./ celsius U.* kelvin
 
 type Lumen = Candela * Steradian -- ^ Unit of luminous flux = cd·sr
 type Lux   = Lumen / Meter^2     -- ^ Unit of illuminance = lm/m²
