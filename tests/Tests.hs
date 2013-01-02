@@ -1,8 +1,6 @@
 {-# LANGUAGE DataKinds, TypeFamilies, TemplateHaskell, QuasiQuotes
-  , TypeOperators #-}
-import Prelude hiding ((+), (-), (*), (/))
+  , TypeOperators, NoImplicitPrelude #-}
 
-import Units
 import Units.Prelude
 import Units.Metric
 

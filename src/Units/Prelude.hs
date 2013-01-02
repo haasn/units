@@ -15,13 +15,15 @@ module Units.Prelude
   ( module Units
   , module Units.TH
 
-  , (Units.Prelude.+)
-  , (Units.Prelude.-)
-  , (Units.Prelude.*)
-  , (Units.Prelude./)
-
+  , (+), (-), (*), (/)
   , Convert, convert
+
+  -- Re-export the rest of the Prelude
+  , module Prelude
   ) where
+
+import Prelude hiding ((+),(-),(*),(/))
+import qualified Prelude
 
 import Units
 import Units.TH

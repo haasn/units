@@ -15,7 +15,7 @@ type family (n :: k) * (m :: k) :: k; infixl 7 *
 type family (n :: k) - (m :: k) :: k; infixl 6 -
 type family (n :: k) / (m :: k) :: k; infixl 7 /
 
--- Peano ℕ⁺
+-- Peano ℕ
 
 data Nat = N0 | NS Nat deriving Eq
 
