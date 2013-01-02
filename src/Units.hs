@@ -31,7 +31,7 @@ type instance where
   InsertAdd (x :^ e) ((y :^ f) ': ys) =
     InsertAdd' (Compare x y) (x :^ e) (y :^ f) ys
 
-type family InsertAdd' (o :: Ordering) (x :: Assoc) (y :: Assoc)(ys :: [Assoc]) :: [Assoc]
+type family InsertAdd' (o :: Ordering) (x :: Assoc) (y :: Assoc) (ys :: [Assoc]) :: [Assoc]
 type instance where
   InsertAdd' LT x y ys = x ': y ': ys
   InsertAdd' GT x y ys = y ': InsertAdd x ys
