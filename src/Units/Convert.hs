@@ -9,9 +9,6 @@ import GHC.Exts (Constraint)
 import Units
 import Units.Internal.Types
 
--- Kind-polymorphic proxy
-data Proxy k = Proxy
-
 class IsoDim (u :: [TChar]) where
   type From u :: Unit
 
@@ -35,28 +32,6 @@ convert :: forall a u v. (Fractional a, Convert u v) => a :@ u -> a :@ v
 convert (U n) = U (n * f1 / f2)
   where f1 = getFactor (Proxy :: Proxy u)
         f2 = getFactor (Proxy :: Proxy v)
-
--- Reflection classes, less overhead than constructing Sing instances
-
-class ReflNat (n :: Nat) where
-  reflNat :: p n -> Integer
-
-instance ReflNat N0 where
-  reflNat _ = 0
-
-instance ReflNat n => ReflNat (NS n) where
-  reflNat _ = 1 + reflNat (Proxy :: Proxy n)
-
-
-class ReflInt (n :: Int) where
-  reflInt :: p n -> Integer
-
-instance ReflNat n => ReflInt (Norm n) where
-  reflInt _ = reflNat (Proxy :: Proxy n)
-
-instance ReflNat n => ReflInt (Neg n) where
-  reflInt _ = (-1) - reflNat (Proxy :: Proxy n)
-
 
 class HasFactor u => Linear (u :: Unit) where
   getFactor :: Fractional a => p u -> a

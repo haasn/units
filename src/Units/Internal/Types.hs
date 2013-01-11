@@ -1,11 +1,12 @@
 {-# LANGUAGE DataKinds, TemplateHaskell, TypeFamilies, TypeOperators
-  , UndecidableInstances, PolyKinds, GADTs, RankNTypes #-}
+  , UndecidableInstances, PolyKinds, GADTs, RankNTypes, ScopedTypeVariables
+  , FlexibleInstances, LambdaCase #-}
 module Units.Internal.Types where
 
 import Prelude hiding (Int)
 import Units.Internal.TypeOrd
 
--- import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
+import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
 import qualified GHC.TypeLits as GHC (Nat)
 
 -- Pretty operators for combining types
@@ -97,6 +98,10 @@ type I9  = Norm N9
 data Assoc = [TChar] :^ Int deriving Eq
 data Unit = EL [Assoc]
 
+-- Kind-polymorphic proxy
+
+data Proxy k = Proxy
+
 -- Type-level ‘characters’
 
 data TChar = CA | CB | CC | CD | CE | CF | CG | CH | CI | CJ | CK | CL | CM
@@ -105,14 +110,96 @@ data TChar = CA | CB | CC | CD | CE | CF | CG | CH | CI | CJ | CK | CL | CM
            | Cn | Co | Cp | Cq | Cr | Cs | Ct | Cu | Cv | Cw | Cx | Cy | Cz
   deriving (Show, Eq, Ord)
 
+type family R (c :: TChar) :: Symbol
+type instance where
+  R CA = "A"; R CB = "B"; R CC = "C"; R CD = "D"; R CE = "E"; R CF = "F"
+  R CG = "G"; R CH = "H"; R CI = "I"; R CJ = "J"; R CK = "K"; R CL = "L"
+  R CM = "M"; R CN = "N"; R CO = "O"; R CP = "P"; R CQ = "Q"; R CR = "R"
+  R CS = "S"; R CT = "T"; R CU = "U"; R CV = "V"; R CW = "W"; R CX = "X"
+  R CY = "Y"; R CZ = "Z"; R Ca = "a"; R Cb = "b"; R Cc = "c"; R Cd = "d"
+  R Ce = "e"; R Cf = "f"; R Cg = "g"; R Ch = "h"; R Ci = "i"; R Cj = "j"
+  R Ck = "k"; R Cl = "l"; R Cm = "m"; R Cn = "n"; R Co = "o"; R Cp = "p"
+  R Cq = "q"; R Cr = "r"; R Cs = "s"; R Ct = "t"; R Cu = "u"; R Cv = "v"
+  R Cw = "w"; R Cx = "x"; R Cy = "y"; R Cz = "z"
+
+-- Reflection of type-level strings to value-level strings
+
+class ReflectChar (t :: TChar) where
+  tchar :: p t -> Char
+
+instance (SingE (KindParam :: OfKind Symbol), SingI (R t))
+          => ReflectChar t where
+  tchar _ = head $ fromSing (sing :: Sing (R t))
+
+class ReflectStr (t :: [TChar]) where
+  tstr :: p t -> String
+
+instance ReflectStr '[] where
+  tstr _ = []
+
+instance (ReflectChar c, ReflectStr cs) => ReflectStr (c ': cs) where
+  tstr _ = tchar (Proxy :: Proxy c) : tstr (Proxy :: Proxy cs)
+
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
 
 data a :@ (u :: Unit) = U a
 infix 5 :@
 
-instance Show a => Show (a :@ u) where
-  show (U x) = show x
+-- Reflection classes, less overhead than constructing Sing instances
+
+class ReflNat (n :: Nat) where
+  reflNat :: p n -> Integer
+
+instance ReflNat N0 where
+  reflNat _ = 0
+
+instance ReflNat n => ReflNat (NS n) where
+  reflNat _ = 1 + reflNat (Proxy :: Proxy n)
+
+
+class ReflInt (n :: Int) where
+  reflInt :: p n -> Integer
+
+instance ReflNat n => ReflInt (Norm n) where
+  reflInt _ = reflNat (Proxy :: Proxy n)
+
+instance ReflNat n => ReflInt (Neg n) where
+  reflInt _ = (-1) - reflNat (Proxy :: Proxy n)
+
+-- Pretty printing of units
+
+class ShowUnit (u :: Unit) where
+  showUnit :: p u -> String
+
+instance ShowEL e => ShowUnit (EL e) where
+  showUnit _ = showEL (Proxy :: Proxy e)
+
+
+class ShowEL (e :: [Assoc]) where
+  showEL :: p e -> String
+
+instance ShowEL '[] where
+  showEL _ = []
+
+instance (ShowAssoc a, ShowEL as) => ShowEL (a ': as) where
+  showEL _ = showAssoc (Proxy :: Proxy a) ++ showEL (Proxy :: Proxy as)
+
+
+class ShowAssoc (a :: Assoc) where
+  showAssoc :: p a -> String
+
+instance (ReflectStr s, ReflInt e) => ShowAssoc (s :^ e) where
+  showAssoc _ = tstr (Proxy :: Proxy s) ++ showExp (reflInt (Proxy :: Proxy e))
+
+showExp :: Integer -> String
+showExp = \case
+  1 -> ""; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"; 8 -> "⁸"
+  e -> '^' : show e
+
+
+instance (Show a, ShowUnit u) => Show (a :@ u) where
+  show u@(U x) = show x ++ " " ++ showUnit u
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators
