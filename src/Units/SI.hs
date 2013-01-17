@@ -77,7 +77,7 @@ makeUnits [ ''Deci , ''Centi, ''Cent , ''Milli, ''Micro, ''Nano, ''Pico
 type Mole       = [u|mol|] -- ^ Unit of amount of substance, symbol ‘mol’
 type Radian     = [u|rad|] -- ^ Unit of angle, symbol ‘rad’
 type Steradian  = [u|sr |] -- ^ Unit of solid angle, symbol ‘sr’
-type Celsius    = [u|dC |] -- ^ Relative unit of temperature, symbol 'dC'
+type Celsius    = [u|C  |] -- ^ Relative unit of temperature, symbol 'C'
 type Becquerell = [u|Bq |] -- ^ Unit of radioacitivity, symbol ‘Bq’
 type Sievert    = [u|Sv |] -- ^ Unit of equivalent dosem symbol ‘Sv’
 
