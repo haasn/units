@@ -9,6 +9,9 @@ import Units.Internal.TypeOrd
 import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
 import qualified GHC.TypeLits as GHC (Nat)
 
+import Data.List (sortBy)
+import Data.Function (on)
+
 -- Pretty operators for combining types
 
 type family (n :: k) + (m :: k) :: k; infixl 6 +
@@ -197,11 +200,19 @@ instance (Show a, SingRep u) => Show (a :@ u) where
   show u@(U x) = show x ++ " " ++ showUnit (fromSing (sing :: Sing u))
 
 showUnit :: [(String,Integer)] -> String
-showUnit = foldr (\(s,e) r -> s ++ "·" ++ showExp e ++ r) ""
+showUnit = foldr ((++) . showAssoc) "" . sortBy (flip compare `on` snd)
  where
   showExp = \case
     1 -> "" ; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"
     8 -> "⁸"; e -> '^' : show e
+
+  showAssoc ("deca", n) = case n of
+    1   -> "da";  2  -> "h";  3  -> "k";  6  -> "M";  9  -> "G";  12 -> "T"
+    15  -> "P" ;  18 -> "E";  21 -> "Z";  24 -> "Y"; -1  -> "d"; -2  -> "c"
+    -3  -> "m" ; -6  -> "μ"; -9  -> "n"; -12 -> "p"; -15 -> "f"; -18 -> "a"
+    -21 -> "z" ; -24 -> "y";  e  -> "10" ++ showExp e
+
+  showAssoc (s, n) = s ++ showExp n ++ "·"
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators
