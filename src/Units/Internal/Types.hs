@@ -9,7 +9,7 @@ import Units.Internal.TypeOrd
 import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
 import qualified GHC.TypeLits as GHC (Nat)
 
-import Data.List (sortBy)
+import Data.List (sortBy, partition, intersperse)
 import Data.Function (on)
 
 -- Pretty operators for combining types
@@ -200,8 +200,19 @@ instance (Show a, SingRep u) => Show (a :@ u) where
   show u@(U x) = show x ++ " " ++ showUnit (fromSing (sing :: Sing u))
 
 showUnit :: [(String,Integer)] -> String
-showUnit = foldr ((++) . showAssoc) "" . sortBy (flip compare `on` snd)
+showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
  where
+  (pos, neg) = partition ((>0) . snd) s
+  (brL, brR) = if length neg > 1 then ("(",")") else ("","")
+  dash       = if length neg > 0 then "/" else ""
+  negA (s,n) = (s, -n)
+
+  [] `or` ys = ys
+  xs `or` _  = xs
+
+  showEL = concat . intersperse "·" . map showAssoc
+           . sortBy (flip compare `on` abs . snd)
+
   showExp = \case
     1 -> "" ; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"
     8 -> "⁸"; e -> '^' : show e
@@ -212,7 +223,7 @@ showUnit = foldr ((++) . showAssoc) "" . sortBy (flip compare `on` snd)
     -3  -> "m" ; -6  -> "μ"; -9  -> "n"; -12 -> "p"; -15 -> "f"; -18 -> "a"
     -21 -> "z" ; -24 -> "y";  e  -> "10" ++ showExp e
 
-  showAssoc (s, n) = s ++ showExp n ++ "·"
+  showAssoc (s, n) = s ++ showExp n
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators
