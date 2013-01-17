@@ -34,6 +34,10 @@ convert (U n) = U (n * f1 / f2)
   where f1 = getFactor (Proxy :: Proxy u)
         f2 = getFactor (Proxy :: Proxy v)
 
+normalize :: forall a u. (Fractional a, Linear u) => a :@ u -> a :@ Base u
+normalize (U n) = U (n * f1)
+  where f1 = getFactor (Proxy :: Proxy u)
+
 class HasFactor u => Linear (u :: Unit) where
   getFactor :: Fractional a => p u -> a
 

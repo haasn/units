@@ -17,6 +17,7 @@ module Units.Prelude
 
   , (+), (-), (*), (/)
   , Convert, convert
+  , Linear, Base, normalize
 
   -- Re-export the rest of the Prelude
   , module Prelude
