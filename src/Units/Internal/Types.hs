@@ -210,12 +210,16 @@ showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
   [] `or` ys = ys
   xs `or` _  = xs
 
-  showEL = concat . intersperse "·" . map showAssoc
+  showEL = concat . map showAssoc . stripSI . intersperse ("·",0)
            . sortBy (flip compare `on` abs . snd)
+
+  stripSI (("deca",n):("·",0):xs) = ("deca",n) : stripSI xs
+  stripSI (a:xs) = a : stripSI xs
+  stripSI []     = []
 
   showExp = \case
     1 -> "" ; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"
-    8 -> "⁸"; e -> '^' : show e
+    8 -> "⁸"; 0 -> "" ; e -> '^' : show e
 
   showAssoc ("deca", n) = case n of
     1   -> "da";  2  -> "h";  3  -> "k";  6  -> "M";  9  -> "G";  12 -> "T"
