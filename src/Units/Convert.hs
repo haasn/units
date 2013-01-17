@@ -5,6 +5,7 @@ module Units.Convert where
 
 import Prelude hiding (Int)
 import GHC.Exts (Constraint)
+import GHC.TypeLits hiding ((*)())
 
 import Units
 import Units.Internal.Types
@@ -39,7 +40,7 @@ class HasFactor u => Linear (u :: Unit) where
 instance Linear (EL '[]) where
   getFactor _ = 1
 
-instance (ReflInt e, IsoDim x, Linear (EL xs))
+instance (SingRep e, IsoDim x, Linear (EL xs))
           => Linear (EL ((x :^ e) ': xs)) where
-  getFactor _ = factor (Proxy :: Proxy x) ^^ reflInt (Proxy :: Proxy e)
+  getFactor _ = factor (Proxy :: Proxy x) ^^ fromSing (sing :: Sing e)
                   * getFactor (Proxy :: Proxy (EL xs))

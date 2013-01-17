@@ -20,6 +20,18 @@ type family (n :: k) / (m :: k) :: k; infixl 7 /
 
 data Nat = N0 | NS Nat deriving Eq
 
+data instance Sing (n :: Nat) where
+  SN0 :: Sing N0
+  SNS :: Sing n -> Sing (NS n)
+
+instance SingI N0 where sing = SN0
+instance SingI n => SingI (NS n) where sing = SNS sing
+
+instance SingE (KindOf N0) where
+  type DemoteRep (KindOf N0) = Integer
+  fromSing  SN0    = 0
+  fromSing (SNS n) = 1 + fromSing n
+
 type instance where
   N0   + m = m
   NS n + m = NS (n+m)
@@ -47,6 +59,18 @@ type N9 = NS N8
 -- Integers as ‘normal’ or ‘negative’, where negative is offset by -1
 
 data Int = Norm Nat | Neg Nat deriving Eq
+
+data instance Sing (i :: Int) where
+  SNorm :: Sing n -> Sing (Norm n)
+  SNeg  :: Sing n -> Sing (Neg  n)
+
+instance SingI n => SingI (Norm n) where sing = SNorm sing
+instance SingI n => SingI (Neg  n) where sing = SNeg sing
+
+instance SingE (KindOf I0) where
+  type DemoteRep (KindOf I0) = Integer
+  fromSing (SNorm n) = fromSing n
+  fromSing (SNeg  n) = (-1) - fromSing n
 
 type instance where
   Norm a + Norm b = Norm (a+b)
@@ -98,6 +122,20 @@ type I9  = Norm N9
 data Assoc = [TChar] :^ Int deriving Eq
 data Unit = EL [Assoc]
 
+data instance Sing (a :: Assoc) where SAssoc :: Sing t -> Sing i -> Sing (t :^ i)
+data instance Sing (u :: Unit ) where SEL :: Sing as -> Sing (EL as)
+
+instance (SingI t, SingI i) => SingI (t :^ i) where sing = SAssoc sing sing
+instance SingI as => SingI (EL as) where sing = SEL sing
+
+instance SingE (KindParam :: OfKind Assoc) where
+  type DemoteRep (KindParam :: OfKind Assoc) = (String, Integer)
+  fromSing (SAssoc t i) = (fromSing t,  fromSing i)
+
+instance SingE (KindParam :: OfKind Unit) where
+  type DemoteRep (KindParam :: OfKind Unit) = [(String, Integer)]
+  fromSing (SEL as) = fromSing as
+
 -- Kind-polymorphic proxy
 
 data Proxy k = Proxy
@@ -109,6 +147,31 @@ data TChar = CA | CB | CC | CD | CE | CF | CG | CH | CI | CJ | CK | CL | CM
            | Ca | Cb | Cc | Cd | Ce | Cf | Cg | Ch | Ci | Cj | Ck | Cl | Cm
            | Cn | Co | Cp | Cq | Cr | Cs | Ct | Cu | Cv | Cw | Cx | Cy | Cz
   deriving (Show, Eq, Ord)
+
+data instance Sing (c :: TChar) where
+  SChar :: Sing (s :: Symbol) -> Sing (c :: TChar)
+
+instance SingI (R c) => SingI (c :: TChar) where
+  sing = SChar (sing :: Sing (R c))
+
+instance SingE (KindOf CA) where
+  type DemoteRep (KindOf CA) = Char
+  fromSing (SChar s) = head (fromSing s)
+
+data instance Sing (l :: [a]) where
+  SNil  :: Sing '[]
+  SCons :: Sing a -> Sing as -> Sing (a ': as)
+
+instance SingI '[] where
+  sing = SNil
+
+instance (SingI a, SingI as) => SingI (a ': as) where
+  sing = SCons sing sing
+
+instance SingE (KindParam :: OfKind a) => SingE (KindParam :: OfKind [a]) where
+  type DemoteRep (KindParam :: OfKind [a]) = [DemoteRep (KindParam :: OfKind a)]
+  fromSing SNil = []
+  fromSing (SCons x xs) = fromSing x : fromSing xs
 
 type family R (c :: TChar) :: Symbol
 type instance where
@@ -122,84 +185,23 @@ type instance where
   R Cq = "q"; R Cr = "r"; R Cs = "s"; R Ct = "t"; R Cu = "u"; R Cv = "v"
   R Cw = "w"; R Cx = "x"; R Cy = "y"; R Cz = "z"
 
--- Reflection of type-level strings to value-level strings
-
-class ReflectChar (t :: TChar) where
-  tchar :: p t -> Char
-
-instance (SingE (KindParam :: OfKind Symbol), SingI (R t))
-          => ReflectChar t where
-  tchar _ = head $ fromSing (sing :: Sing (R t))
-
-class ReflectStr (t :: [TChar]) where
-  tstr :: p t -> String
-
-instance ReflectStr '[] where
-  tstr _ = []
-
-instance (ReflectChar c, ReflectStr cs) => ReflectStr (c ': cs) where
-  tstr _ = tchar (Proxy :: Proxy c) : tstr (Proxy :: Proxy cs)
-
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
 
 data a :@ (u :: Unit) = U a
 infix 5 :@
 
--- Reflection classes, less overhead than constructing Sing instances
-
-class ReflNat (n :: Nat) where
-  reflNat :: p n -> Integer
-
-instance ReflNat N0 where
-  reflNat _ = 0
-
-instance ReflNat n => ReflNat (NS n) where
-  reflNat _ = 1 + reflNat (Proxy :: Proxy n)
-
-
-class ReflInt (n :: Int) where
-  reflInt :: p n -> Integer
-
-instance ReflNat n => ReflInt (Norm n) where
-  reflInt _ = reflNat (Proxy :: Proxy n)
-
-instance ReflNat n => ReflInt (Neg n) where
-  reflInt _ = (-1) - reflNat (Proxy :: Proxy n)
-
 -- Pretty printing of units
 
-class ShowUnit (u :: Unit) where
-  showUnit :: p u -> String
+instance (Show a, SingRep u) => Show (a :@ u) where
+  show u@(U x) = show x ++ " " ++ showUnit (fromSing (sing :: Sing u))
 
-instance ShowEL e => ShowUnit (EL e) where
-  showUnit _ = showEL (Proxy :: Proxy e)
-
-
-class ShowEL (e :: [Assoc]) where
-  showEL :: p e -> String
-
-instance ShowEL '[] where
-  showEL _ = []
-
-instance (ShowAssoc a, ShowEL as) => ShowEL (a ': as) where
-  showEL _ = showAssoc (Proxy :: Proxy a) ++ showEL (Proxy :: Proxy as)
-
-
-class ShowAssoc (a :: Assoc) where
-  showAssoc :: p a -> String
-
-instance (ReflectStr s, ReflInt e) => ShowAssoc (s :^ e) where
-  showAssoc _ = tstr (Proxy :: Proxy s) ++ showExp (reflInt (Proxy :: Proxy e))
-
-showExp :: Integer -> String
-showExp = \case
-  1 -> ""; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"; 8 -> "⁸"
-  e -> '^' : show e
-
-
-instance (Show a, ShowUnit u) => Show (a :@ u) where
-  show u@(U x) = show x ++ " " ++ showUnit u
+showUnit :: [(String,Integer)] -> String
+showUnit = foldr (\(s,e) r -> s ++ "·" ++ showExp e ++ r) ""
+ where
+  showExp = \case
+    1 -> "" ; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"
+    8 -> "⁸"; e -> '^' : show e
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators
