@@ -151,6 +151,9 @@ data TChar = CA | CB | CC | CD | CE | CF | CG | CH | CI | CJ | CK | CL | CM
            | Cn | Co | Cp | Cq | Cr | Cs | Ct | Cu | Cv | Cw | Cx | Cy | Cz
   deriving (Show, Eq, Ord)
 
+-- Represent TChar's Sing as a wrapper around a Symbol internally, then
+-- construct/demote that instead.
+
 data instance Sing (c :: TChar) where
   SChar :: Sing (s :: Symbol) -> Sing (c :: TChar)
 
@@ -176,6 +179,7 @@ instance SingE (KindParam :: OfKind a) => SingE (KindParam :: OfKind [a]) where
   fromSing SNil = []
   fromSing (SCons x xs) = fromSing x : fromSing xs
 
+-- Reflect a TChar to its Symbol representation, for demotion
 type family R (c :: TChar) :: Symbol
 type instance where
   R CA = "A"; R CB = "B"; R CC = "C"; R CD = "D"; R CE = "E"; R CF = "F"
@@ -202,7 +206,7 @@ instance (Show a, SingRep u) => Show (a :@ u) where
 showUnit :: [(String,Integer)] -> String
 showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
  where
-  (pos, neg) = partition ((>0) . snd) s
+  (pos, neg) = partition (\(u,e) -> e>0 || u == "deca") s
   (brL, brR) = if length neg > 1 then ("(",")") else ("","")
   dash       = if length neg > 0 then "/" else ""
   negA (s,n) = (s, -n)
@@ -210,6 +214,8 @@ showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
   [] `or` ys = ys
   xs `or` _  = xs
 
+  -- Treat multiplication signs as phantom units so they can be removed
+  -- where appropriate before processing SI prefixes
   showEL = concat . map showAssoc . stripSI . intersperse ("·",0)
            . sortBy (flip compare `on` abs . snd)
 
@@ -221,16 +227,17 @@ showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
     1 -> "" ; 2 -> "²"; 3 -> "³"; 4 -> "⁴"; 5 -> "⁵"; 6 -> "⁶"; 7 -> "⁷"
     8 -> "⁸"; 0 -> "" ; e -> '^' : show e
 
+  -- Special casing of ‘deca’ to show SI prefixes with their proper names
   showAssoc ("deca", n) = case n of
-    1   -> "da";  2  -> "h";  3  -> "k";  6  -> "M";  9  -> "G";  12 -> "T"
+    1   -> "da";  2  -> "hekto";  3  -> "k";  6  -> "M";  9  -> "G";  12 -> "T"
     15  -> "P" ;  18 -> "E";  21 -> "Z";  24 -> "Y"; -1  -> "d"; -2  -> "c"
     -3  -> "m" ; -6  -> "μ"; -9  -> "n"; -12 -> "p"; -15 -> "f"; -18 -> "a"
-    -21 -> "z" ; -24 -> "y";  e  -> "10" ++ showExp e
+    -21 -> "z" ; -24 -> "y";  e  -> "10" ++ showExp e ++ "·"
 
   showAssoc (s, n) = s ++ showExp n
 
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
--- proper Nat operators
+-- proper Nat operators.
 
 type family IntLit (a :: GHC.Nat) :: Int
 type instance where
