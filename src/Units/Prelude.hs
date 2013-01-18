@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances, TypeFamilies, TypeOperators, DataKinds #-}
+{-# LANGUAGE FlexibleInstances, TypeFamilies, TypeOperators, DataKinds
+  , UndecidableInstances #-}
 -- | Functions to replace the numerical functions from the Prelude.
 --   See "Units" for the documentation of '(+)', '(-)', '(*)' and '(/)'.
 --
@@ -45,6 +46,14 @@ infixl 7 *
 (/) :: Fractional a => a :@ u -> a :@ v -> a :@ u/v
 (/) = divU
 infixl 7 /
+
+-- Ability to write units like “5 meter”
+instance (Num a, t ~ (a :@ One*u)) => Num (a :@ u -> t) where
+  fromInteger = (*) . fromInteger
+  (+) = error "(+) on not fully applied number"
+  (*) = error "(*) on not fully applied number"
+  abs = error "abs on not fully applied number"
+  signum = error "signum on not fully applied number"
 
 instance (Num a, u ~ One) => Num (a :@ u) where
   fromInteger = lit . fromInteger

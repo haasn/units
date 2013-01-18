@@ -3,7 +3,7 @@
   , FlexibleContexts, GADTs #-}
 module Units
   -- * Types
-  ( (:@)(), One
+  ( (:@)(), One, Unit
 
   -- ** Type functions for combining units
   , (*)(), (/)(), (^)(), (^^)()
