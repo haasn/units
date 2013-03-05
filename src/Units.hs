@@ -9,7 +9,7 @@ module Units
   , (*)(), (/)(), (^)(), (^^)()
 
   -- * Type-safe calculations with units
-  , addU, subU, mulU, divU
+  , addU, subU, mulU, divU, sqrtU
   , lit, unTag
 
   -- * Type-unsafe functions
@@ -113,6 +113,10 @@ mulU (U a) (U b) = U (a*b)
 
 divU :: Fractional a => a :@ u -> a :@ v -> a :@ u/v
 divU (U a) (U b) = U (a/b)
+
+-- | Take the square root of a squared unit
+sqrtU :: Floating a => a :@ u^2 -> a :@ u
+sqrtU (U a) = U (sqrt a)
 
 -- | Project any value into a dimensionless quantity
 

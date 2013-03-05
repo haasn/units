@@ -16,7 +16,7 @@ module Units.Prelude
   ( module Units
   , module Units.TH
 
-  , (+), (-), (*), (/)
+  , (+), (-), (*), (/), sqrt
   , Convert, convert
   , Linear, Base, normalize
 
@@ -24,7 +24,7 @@ module Units.Prelude
   , module Prelude
   ) where
 
-import Prelude hiding ((+),(-),(*),(/))
+import Prelude hiding ((+),(-),(*),(/),sqrt)
 import qualified Prelude
 
 import Units
@@ -47,6 +47,9 @@ infixl 7 *
 (/) = divU
 infixl 7 /
 
+sqrt :: Floating a => a :@ u^2 -> a :@ u
+sqrt = sqrtU
+
 -- Ability to write units like “5 meter”
 instance (Num a, t ~ (a :@ One*u)) => Num (a :@ u -> t) where
   fromInteger = (*) . fromInteger
@@ -62,6 +65,11 @@ instance (Num a, u ~ One) => Num (a :@ u) where
   abs    = lit . abs . unTag
   signum = lit . abs . unTag
 
+instance (Fractional a, t ~ (a :@ One*u)) => Fractional (a :@ u -> t) where
+  fromRational = (*) . fromRational
+  (/) = error "(/) on not fully applied number"
+  recip = error "recip on not fully applied number"
+
 instance (Fractional a, u ~ One) => Fractional (a :@ u) where
   fromRational = lit . fromRational
   (/)   = divU
@@ -73,7 +81,7 @@ instance (Floating a, u ~ One) => Floating (a :@ u) where
   logBase a b = lit $ unTag a `logBase` unTag b
 
   exp   = lit . exp   . unTag
-  sqrt  = lit . sqrt  . unTag
+  sqrt  = lit . Prelude.sqrt  . unTag
   log   = lit . log   . unTag
   sin   = lit . sin   . unTag
   tan   = lit . tan   . unTag
