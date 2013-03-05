@@ -25,25 +25,24 @@ import qualified GHC.TypeLits as GHC (Nat)
 
 -- Merging by adding. Units are pre-sorted, so this preserves invariants
 
-type family InsertAdd (x :: Assoc) (xs :: [Assoc]) :: [Assoc]
+type family Merge (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc]
 type instance where
-  InsertAdd  x       '[]              = '[x]
-  InsertAdd (x :^ e) ((y :^ f) ': ys) =
-    InsertAdd' (Compare x y) (x :^ e) (y :^ f) ys
+  Merge xs '[] = xs
+  Merge '[] ys = ys
+  Merge ((x :^ e) ': xs) ((y :^ f) ': ys) = Merge' (Compare x y) (x :^ e) (y :^ f) xs ys
 
-type family InsertAdd' (o :: Ordering) (x :: Assoc) (y :: Assoc) (ys :: [Assoc]) :: [Assoc]
+type family Merge' (o :: Ordering) (x :: Assoc) (y :: Assoc) (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc]
 type instance where
-  InsertAdd' LT x y ys = x ': y ': ys
-  InsertAdd' GT x y ys = y ': InsertAdd x ys
-  InsertAdd' EQ (x :^ Norm (NS e)) (y :^ Neg e) ys = ys -- Delete 0s
-  InsertAdd' EQ (x :^ Neg e) (y :^ Norm (NS e)) ys = ys -- Delete 0s
-  InsertAdd' EQ (x :^ e) (y :^ f) ys = (x :^ (e+f)) ': ys
+  Merge' LT x y xs ys = x ': Merge xs (y ': ys)
+  Merge' GT x y xs ys = y ': Merge (x ': xs) ys
+  Merge' EQ (x :^ Norm (NS e)) (y :^ Neg e) xs ys = Merge xs ys -- Delete 0s
+  Merge' EQ (x :^ Neg e) (y :^ Norm (NS e)) xs ys = Merge xs ys -- Delete 0s
+  Merge' EQ (x :^ e) (y :^ f) xs ys = (x :^ (e+f)) ': Merge xs ys
 
 -- Common operators: Multiplication, Exponentiation, Division
 
 type instance where
-  EL xs * EL '[]       = EL xs
-  EL xs * EL (y ': ys) = EL (InsertAdd y xs) * EL ys
+  EL xs * EL ys = EL (Merge xs ys)
 
 type family MapMul (f :: Int) (u :: [Assoc]) :: [Assoc]
 type instance where
