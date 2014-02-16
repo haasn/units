@@ -4,8 +4,8 @@
 module Units.Convert where
 
 import Prelude hiding (Int)
+import Data.Singletons
 import GHC.Exts (Constraint)
-import GHC.TypeLits hiding ((*)())
 
 import Units
 import Units.Internal.Types
@@ -15,13 +15,11 @@ class IsoDim (u :: [TChar]) where
 
   factor :: Fractional a => p u -> a -- From u / u
 
-type family Base (u :: Unit) :: Unit
-type instance where
+type family Base (u :: Unit) :: Unit where
   Base (EL  '[]        ) = One
   Base (EL ((u:^e)':us)) = From u ^^ e * Base (EL us)
 
-type family HasFactor (u :: Unit) :: Constraint
-type instance where
+type family HasFactor (u :: Unit) :: Constraint where
   HasFactor (EL '[])              = ()
   HasFactor (EL ((u :^ e) ': xs)) = (HasFactor (EL xs), IsoDim u)
 

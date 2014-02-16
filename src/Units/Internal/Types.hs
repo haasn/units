@@ -1,11 +1,12 @@
 {-# LANGUAGE DataKinds, TemplateHaskell, TypeFamilies, TypeOperators
   , UndecidableInstances, PolyKinds, GADTs, RankNTypes, ScopedTypeVariables
-  , FlexibleInstances, LambdaCase #-}
+  , FlexibleInstances, LambdaCase, ConstraintKinds #-}
 module Units.Internal.Types where
 
 import Prelude hiding (Int)
 import Units.Internal.TypeOrd
 
+import Data.Singletons
 import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
 import qualified GHC.TypeLits as GHC (Nat)
 
@@ -30,24 +31,30 @@ data instance Sing (n :: Nat) where
 instance SingI N0 where sing = SN0
 instance SingI n => SingI (NS n) where sing = SNS sing
 
-instance SingE (KindOf N0) where
+instance SingKind (KindOf N0) where
   type DemoteRep (KindOf N0) = Integer
   fromSing  SN0    = 0
   fromSing (SNS n) = 1 + fromSing n
 
-type instance where
-  N0   + m = m
-  NS n + m = NS (n+m)
+type family AddNat a b where
+  N0   `AddNat` m = m
+  NS n `AddNat` m = NS (n `AddNat` m)
 
-type instance where
-  N0   * m = N0
-  NS n * m = m + (n*m)
+type instance n + m = n `AddNat` m
 
-type instance where
-  Compare  N0     N0    = EQ
-  Compare  N0     m     = LT
-  Compare  n      N0    = GT
-  Compare (NS n) (NS m) = Compare n m
+type family MulNat a b where
+  N0   `MulNat` m = N0
+  NS n `MulNat` m = m `AddNat` (n `MulNat` m)
+
+type instance n * m = n `MulNat` m
+
+type family CmpNat a b where
+  CmpNat  N0     N0    = EQ
+  CmpNat  N0     m     = LT
+  CmpNat  n      N0    = GT
+  CmpNat (NS n) (NS m) = CmpNat n m
+
+type instance Compare n m = CmpNat n m
 
 type N1 = NS N0
 type N2 = NS N1
@@ -70,43 +77,45 @@ data instance Sing (i :: Int) where
 instance SingI n => SingI (Norm n) where sing = SNorm sing
 instance SingI n => SingI (Neg  n) where sing = SNeg sing
 
-instance SingE (KindOf I0) where
+instance SingKind (KindOf I0) where
   type DemoteRep (KindOf I0) = Integer
   fromSing (SNorm n) = fromSing n
   fromSing (SNeg  n) = (-1) - fromSing n
 
-type instance where
-  Norm a + Norm b = Norm (a+b)
-  Neg  a + Neg  b = Neg  (NS (a+b))
+type family AddInt a b where
+  Norm a `AddInt` Norm b = Norm (a+b)
+  Neg  a `AddInt` Neg  b = Neg  (NS (a+b))
 
   -- 0 + (1-b) = 1-b
-  Norm N0 + Neg b = Neg b
+  Norm N0 `AddInt` Neg b = Neg b
 
   -- (1+a) + (-1-0) = 1+a - 1 = a
-  Norm (NS a) + Neg N0 = Norm a
+  Norm (NS a) `AddInt` Neg N0 = Norm a
 
   -- (1+a) + (-1-(1+b)) = 1+a + (-2-b) = a + -1-b
-  Norm (NS a) + Neg (NS b) = Norm a + Neg b
+  Norm (NS a) `AddInt` Neg (NS b) = Norm a + Neg b
 
   -- (-1-a) + b = b + (-1-a)
-  Neg a + Norm b = Norm b + Neg a
+  Neg a `AddInt` Norm b = Norm b + Neg a
 
-type family Negate (a :: Int) :: Int
-type instance where
+type instance a + b = a `AddInt` b
+
+type family Negate (a :: Int) :: Int where
   Negate (Norm  N0   ) = Norm N0
   Negate (Norm (NS a)) = Neg a
   Negate (Neg   a    ) = Norm (NS a)
 
-type instance where
-  a - b = a + Negate b
+type instance a - b = a + Negate b
 
-type instance where
-  Norm a * Norm b = Norm (a*b)
-  Neg  a * Norm b = Negate (Norm (NS a * b))
-  Norm a * Neg  b = Neg b * Norm a
+type family MulInt a b where
+  Norm a `MulInt` Norm b = Norm (a*b)
+  Neg  a `MulInt` Norm b = Negate (Norm (NS a * b))
+  Norm a `MulInt` Neg  b = Neg b * Norm a
 
   -- (-1-a) * (-1-b) = -(-1-a) - b(-1-a) = 1+a+b+ab
-  Neg a * Neg b = Norm (NS (a + b + a*b))
+  Neg a `MulInt` Neg b = Norm (NS (a + b + a*b))
+
+type instance a * b = a `MulInt` b
 
 type IM1 = Neg N0
 type I0  = Norm N0
@@ -131,17 +140,13 @@ data instance Sing (u :: Unit ) where SEL :: Sing as -> Sing (EL as)
 instance (SingI t, SingI i) => SingI (t :^ i) where sing = SAssoc sing sing
 instance SingI as => SingI (EL as) where sing = SEL sing
 
-instance SingE (KindParam :: OfKind Assoc) where
-  type DemoteRep (KindParam :: OfKind Assoc) = (String, Integer)
+instance SingKind ('KProxy :: KProxy Assoc) where
+  type DemoteRep ('KProxy :: KProxy Assoc) = (String, Integer)
   fromSing (SAssoc t i) = (fromSing t,  fromSing i)
 
-instance SingE (KindParam :: OfKind Unit) where
-  type DemoteRep (KindParam :: OfKind Unit) = [(String, Integer)]
+instance SingKind ('KProxy :: KProxy Unit) where
+  type DemoteRep ('KProxy :: KProxy Unit) = [(String, Integer)]
   fromSing (SEL as) = fromSing as
-
--- Kind-polymorphic proxy
-
-data Proxy k = Proxy
 
 -- Type-level ‘characters’
 
@@ -160,10 +165,11 @@ data instance Sing (c :: TChar) where
 instance SingI (R c) => SingI (c :: TChar) where
   sing = SChar (sing :: Sing (R c))
 
-instance SingE (KindOf CA) where
+instance SingKind (KindOf CA) where
   type DemoteRep (KindOf CA) = Char
   fromSing (SChar s) = head (fromSing s)
 
+{-
 data instance Sing (l :: [a]) where
   SNil  :: Sing '[]
   SCons :: Sing a -> Sing as -> Sing (a ': as)
@@ -174,14 +180,14 @@ instance SingI '[] where
 instance (SingI a, SingI as) => SingI (a ': as) where
   sing = SCons sing sing
 
-instance SingE (KindParam :: OfKind a) => SingE (KindParam :: OfKind [a]) where
-  type DemoteRep (KindParam :: OfKind [a]) = [DemoteRep (KindParam :: OfKind a)]
+instance SingKind (KindOf a) => SingKind (KindOf [a]) where
+  type DemoteRep (KindOf [a]) = [DemoteRep (KindOf a)]
   fromSing SNil = []
   fromSing (SCons x xs) = fromSing x : fromSing xs
+-}
 
 -- Reflect a TChar to its Symbol representation, for demotion
-type family R (c :: TChar) :: Symbol
-type instance where
+type family R (c :: TChar) :: Symbol where
   R CA = "A"; R CB = "B"; R CC = "C"; R CD = "D"; R CE = "E"; R CF = "F"
   R CG = "G"; R CH = "H"; R CI = "I"; R CJ = "J"; R CK = "K"; R CL = "L"
   R CM = "M"; R CN = "N"; R CO = "O"; R CP = "P"; R CQ = "Q"; R CR = "R"
@@ -191,6 +197,8 @@ type instance where
   R Ck = "k"; R Cl = "l"; R Cm = "m"; R Cn = "n"; R Co = "o"; R Cp = "p"
   R Cq = "q"; R Cr = "r"; R Cs = "s"; R Ct = "t"; R Cu = "u"; R Cv = "v"
   R Cw = "w"; R Cx = "x"; R Cy = "y"; R Cz = "z"
+
+type SingRep e = (SingI e, SingKind (KindOf e))
 
 -- | Type for tagging values with units. Use 'lit' for constructing values
 --   of this type.
@@ -239,8 +247,7 @@ showUnit s = showEL pos `or` "1" ++ dash ++ brL ++ showEL (map negA neg) ++ brR
 -- Injection of built-int Nat -> Int, ugly at the moment due to lack of
 -- proper Nat operators.
 
-type family IntLit (a :: GHC.Nat) :: Int
-type instance where
+type family IntLit (a :: GHC.Nat) :: Int where
   IntLit 0 = I0
   IntLit 1 = I1
   IntLit 2 = I2

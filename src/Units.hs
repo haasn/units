@@ -25,14 +25,12 @@ import qualified GHC.TypeLits as GHC (Nat)
 
 -- Merging by adding. Units are pre-sorted, so this preserves invariants
 
-type family Merge (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc]
-type instance where
+type family Merge (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc] where
   Merge xs '[] = xs
   Merge '[] ys = ys
   Merge ((x :^ e) ': xs) ((y :^ f) ': ys) = Merge' (Compare x y) (x :^ e) (y :^ f) xs ys
 
-type family Merge' (o :: Ordering) (x :: Assoc) (y :: Assoc) (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc]
-type instance where
+type family Merge' (o :: Ordering) (x :: Assoc) (y :: Assoc) (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc] where
   Merge' LT x y xs ys = x ': Merge xs (y ': ys)
   Merge' GT x y xs ys = y ': Merge (x ': xs) ys
   Merge' EQ (x :^ Norm (NS e)) (y :^ Neg e) xs ys = Merge xs ys -- Delete 0s
@@ -41,11 +39,9 @@ type instance where
 
 -- Common operators: Multiplication, Exponentiation, Division
 
-type instance where
-  EL xs * EL ys = EL (Merge xs ys)
+type instance EL xs * EL ys = EL (Merge xs ys)
 
-type family MapMul (f :: Int) (u :: [Assoc]) :: [Assoc]
-type instance where
+type family MapMul (f :: Int) (u :: [Assoc]) :: [Assoc] where
   MapMul f '[]              = '[]
   MapMul f ((x :^ e) ': xs) = (x :^ (f*e)) ': MapMul f xs
 
@@ -68,8 +64,7 @@ infixr 8 ^
 type family Recip (u :: Unit) :: Unit
 type instance Recip xs = xs ^^ IM1
 
-type instance where
-  xs / ys = xs * Recip ys
+type instance xs / ys = xs * Recip ys
 
 -- | The dimensionless unit. This is the multiplicative identity of units.
 
