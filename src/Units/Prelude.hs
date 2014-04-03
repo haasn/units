@@ -50,7 +50,7 @@ infixl 7 /
 sqrt :: Floating a => a :@ u^2 -> a :@ u
 sqrt = sqrtU
 
--- Ability to write units like “5 meter”
+-- Ability to write units like “5 meter” or even “5 kilo*meter/hour”
 instance (Num a, t ~ (a :@ One*u)) => Num (a :@ u -> t) where
   fromInteger = (*) . fromInteger
   (+) = error "(+) on not fully applied number"
