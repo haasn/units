@@ -14,12 +14,12 @@ import Units.SI
 
 -- Some widely used non-SI units
 
-type Minute    = [u|min |] -- ^ Unit of time, symbol ‘min’
-type Hour      = [u|h   |] -- ^ Unit of time, symbol ‘h’
-type Day       = [u|d   |] -- ^ Unit of time, symbol ‘d’
-type Degree    = [u|deg |] -- ^ Unit of angle, symbol ‘deg’
-type ArcMinute = [u|amin|] -- ^ Unit of angle, symbol ‘amin’
-type ArcSecond = [u|asec|] -- ^ Unit of angle, symbol ‘asec’
+type Minute    = U "min"  -- ^ Unit of time, symbol ‘min’
+type Hour      = U "h"    -- ^ Unit of time, symbol ‘h’
+type Day       = U "d"    -- ^ Unit of time, symbol ‘d’
+type Degree    = U "deg"  -- ^ Unit of angle, symbol ‘deg’
+type ArcMinute = U "amin" -- ^ Unit of angle, symbol ‘amin’
+type ArcSecond = U "asec" -- ^ Unit of angle, symbol ‘asec’
 
 makeUnits [ ''Minute, ''Hour, ''Day, ''Degree, ''ArcMinute, ''ArcSecond ]
 
@@ -36,10 +36,10 @@ makeUnits [ ''Are, ''Hectare, ''Liter, ''Litre, ''Gram, ''Tonne ]
 
 type ElectronVolt   = ElectronCharge * Volt -- ^ Unit of energy, symbol ‘eV’
 
-type AtomicMass     = [u|u |]    -- ^ Unit of mass, symbol ‘u’
+type AtomicMass     = U "u"      -- ^ Unit of mass, symbol ‘u’
 type Dalton         = AtomicMass -- ^ Alternative name for 'AtomicMass'
-type AstroUnit      = [u|au|]    -- ^ Unit of length, symbol ‘au’
-type ElectronCharge = [u|e |]    -- ^ Unit of charge, symbol ‘e’
+type AstroUnit      = U "au"     -- ^ Unit of length, symbol ‘au’
+type ElectronCharge = U "e"      -- ^ Unit of charge, symbol ‘e’
 
 makeUnits [ ''ElectronVolt, ''AtomicMass, ''Dalton, ''AstroUnit
           , ''ElectronCharge ]
@@ -48,7 +48,7 @@ makeUnits [ ''ElectronVolt, ''AtomicMass, ''Dalton, ''AstroUnit
 
 type Bar        = Deca^5 * Pascal -- ^ Unit of pressure = 10^5·Pa
 type Millibar   = Milli*Bar       -- ^ Unit of pressure = bar/1000
-type Atmosphere = [u|atm|]        -- ^ Unit of pressure, symbol ‘atm’
+type Atmosphere = U "atm"         -- ^ Unit of pressure, symbol ‘atm’
 
 makeUnits [ ''Bar, ''Millibar, ''Atmosphere ]
 

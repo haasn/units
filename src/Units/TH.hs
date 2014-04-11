@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, LambdaCase, TypeOperators #-}
 -- | TemplateHaskell functions for introducing new units.
-module Units.TH (u, makeUnit, makeUnits, makeConvert) where
+module Units.TH (makeUnit, makeUnits, makeConvert) where
 
 import Prelude hiding (div, exp, Rational, Int)
 
@@ -15,6 +15,7 @@ import Units.Internal.Types
 
 -- Quasiquoter for TString
 
+{-
 toTChar' :: Char -> Name
 toTChar' = \case
   'A'->'CA; 'B'->'CB; 'C'->'CC; 'D'->'CD; 'E'->'CE; 'F'->'CF; 'G'->'CG;
@@ -44,7 +45,7 @@ promotedListT (x:xs) = AppT (AppT PromotedConsT x) (promotedListT xs)
 quoteUnitT :: String -> Q Type
 quoteUnitT s = return $ AppT (PromotedT 'EL)
                 (promotedListT [AppT (AppT (PromotedT '(:^)) ts) (ConT ''I1)])
-  where ts = toTString s
+  where ts = LitT (StrTyLit $ strip s)
 
 -- | A QuasiQuoter for units. Only alphanumeric characters are used.
 --
@@ -59,6 +60,7 @@ quoteUnitT s = return $ AppT (PromotedT 'EL)
 
 u :: QuasiQuoter
 u = QuasiQuoter undefined undefined quoteUnitT undefined
+-}
 
 -- Demote a unit to the value level
 
@@ -104,6 +106,7 @@ makeConvert un bn f = do
     ]]
 
 getDim :: Type -> Type
+getDim (AppT (ConT u) t@(LitT (StrTyLit _))) = t
 getDim (AppT (ConT el) (AppT (AppT PromotedConsT
   (AppT (AppT (ConT (^)) n) (ConT i1))) PromotedNilT)) = n
 

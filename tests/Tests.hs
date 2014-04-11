@@ -26,7 +26,7 @@ test8 = test7 * test6 / test2
 
 -- Unit conversion
 
-type Yard = [u|yd|]
+type Yard = U "yd"
 makeUnit ''Yard
 
 yards :: Fractional a => a :@ Yard -> a :@ Meter

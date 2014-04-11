@@ -53,6 +53,7 @@ sqrt = sqrtU
 -- Ability to write units like “5 meter” or even “5 kilo*meter/hour”
 instance (Num a, t ~ (a :@ One*u)) => Num (a :@ u -> t) where
   fromInteger = (*) . fromInteger
+  negate = error "negate on not fully applied number"
   (+) = error "(+) on not fully applied number"
   (*) = error "(*) on not fully applied number"
   abs = error "abs on not fully applied number"
@@ -62,6 +63,7 @@ instance (Num a, u ~ One) => Num (a :@ u) where
   fromInteger = lit . fromInteger
   (+)    = addU
   (*)    = mulU
+  negate = lit . abs . unTag
   abs    = lit . abs . unTag
   signum = lit . abs . unTag
 

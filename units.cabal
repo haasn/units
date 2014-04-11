@@ -27,7 +27,6 @@ library
                        Units.Currency
 
   other-modules:       Units.Internal.Types
-                       Units.Internal.TypeOrd
 
   hs-source-dirs:      src
 

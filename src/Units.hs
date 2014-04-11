@@ -3,7 +3,7 @@
   , FlexibleContexts, GADTs #-}
 module Units
   -- * Types
-  ( (:@)(), One, Unit
+  ( (:@)(), One, Unit, U
 
   -- ** Type functions for combining units
   , (*)(), (/)(), (^)(), (^^)()
@@ -18,9 +18,9 @@ module Units
 
 import Prelude hiding (Int)
 
-import Units.Internal.TypeOrd (Compare)
 import Units.Internal.Types
 
+import GHC.TypeLits (Symbol, CmpSymbol)
 import qualified GHC.TypeLits as GHC (Nat)
 
 -- Merging by adding. Units are pre-sorted, so this preserves invariants
@@ -28,14 +28,16 @@ import qualified GHC.TypeLits as GHC (Nat)
 type family Merge (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc] where
   Merge xs '[] = xs
   Merge '[] ys = ys
-  Merge ((x :^ e) ': xs) ((y :^ f) ': ys) = Merge' (Compare x y) (x :^ e) (y :^ f) xs ys
+  Merge ((x :^ e) ': xs) ((y :^ f) ': ys) = Merge' (CmpSymbol x y) (x :^ e) (y :^ f) xs ys
 
 type family Merge' (o :: Ordering) (x :: Assoc) (y :: Assoc) (xs :: [Assoc]) (ys :: [Assoc]) :: [Assoc] where
   Merge' LT x y xs ys = x ': Merge xs (y ': ys)
   Merge' GT x y xs ys = y ': Merge (x ': xs) ys
-  Merge' EQ (x :^ Norm (NS e)) (y :^ Neg e) xs ys = Merge xs ys -- Delete 0s
-  Merge' EQ (x :^ Neg e) (y :^ Norm (NS e)) xs ys = Merge xs ys -- Delete 0s
-  Merge' EQ (x :^ e) (y :^ f) xs ys = (x :^ (e+f)) ': Merge xs ys
+  Merge' EQ (x :^ e) (y :^ f) xs ys = DelZ x (e+f) (Merge xs ys)
+
+type family DelZ (x :: Symbol) (e :: Int) (xs :: [Assoc]) :: [Assoc] where
+  DelZ x (Norm 0) xs = xs
+  DelZ x e        xs = (x :^ e) ': xs
 
 -- Common operators: Multiplication, Exponentiation, Division
 
@@ -58,11 +60,11 @@ infixr 8 ^^
 --   > a ^ 1 ~ a
 
 type family (u :: Unit) ^ (n :: GHC.Nat) :: Unit
-type instance u ^ n = u ^^ IntLit n
+type instance u ^ n = u ^^ Norm n
 infixr 8 ^
 
 type family Recip (u :: Unit) :: Unit
-type instance Recip xs = xs ^^ IM1
+type instance Recip xs = xs ^^ Neg 0
 
 type instance xs / ys = xs * Recip ys
 
@@ -128,3 +130,7 @@ unTag (U a) = a
 
 coerceUnit :: a:@u -> a:@v
 coerceUnit (U a) = U a
+
+-- | Base unit for a named type
+
+type U s = EL '[ s :^ Norm 1 ]

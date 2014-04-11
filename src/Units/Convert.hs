@@ -10,7 +10,7 @@ import GHC.Exts (Constraint)
 import Units
 import Units.Internal.Types
 
-class IsoDim (u :: [TChar]) where
+class IsoDim (u :: Symbol) where
   type From u :: Unit
 
   factor :: Fractional a => p u -> a -- From u / u
