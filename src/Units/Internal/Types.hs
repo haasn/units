@@ -7,7 +7,8 @@ import Prelude hiding (Int)
 import Units.Internal.TypeOrd
 
 import Data.Singletons
-import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat)
+import Data.Singletons.Prelude()
+import GHC.TypeLits hiding ((+)(),(-)(),(*)(),Nat,CmpNat)
 import qualified GHC.TypeLits as GHC (Nat)
 
 import Data.List (sortBy, partition, intersperse)
